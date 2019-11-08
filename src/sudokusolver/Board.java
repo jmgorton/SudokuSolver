@@ -1,10 +1,10 @@
 package sudokusolver;
 
 import java.util.*;
-import java.util.logging.Logger;
 import java.io.*;
 
 // make this work for nxn sudoku puzzles (n must be a square i think)
+@SuppressWarnings("unused")
 public class Board {
 	
 	// possible ways to initialize board ??
@@ -109,7 +109,6 @@ public class Board {
 //		b.printCellPoss(4, 8);
 //		System.out.println();
 		
-//		@SuppressWarnings("unchecked")
 		Tuple<Integer, Integer> t = new Tuple<Integer, Integer>(1, 1);
 		
 		
