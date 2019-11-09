@@ -1,5 +1,8 @@
 package sudokusolver;
 
+//import com.google.common.collect.Table;
+//import com.google.common.collect.HashBasedTable;
+
 import java.util.*;
 import java.io.*;
 
@@ -38,6 +41,7 @@ public class Board {
 //	board[3][5] = 7;
 //	board[3][7] = 8;
 	
+	// not used yet
 	public int[][] rowOptions = new int[9][9];	
 //	public static Map<Integer, List<Integer>> rowOptions = new HashMap<Integer, List<Integer>>();
 	public int[][] colOptions = new int[9][9];	
@@ -48,20 +52,23 @@ public class Board {
 	// working solution
 	public int[][] sol = new int[9][9];
 	// possible candidates for each cell
-	public int[][][] possible = new int[9][9][9];	// a list would probably be more convenient
-//	public Map<Tuple<Integer, Integer>, List<Integer>> possible = 
-//			new HashMap<Tuple<Integer, Integer>, List<Integer>>();
+	public int[][][] possible = new int[9][9][9];
+	// achieve same as possible array but maybe more cleanly. map a coordinate to a list of possibilities
+	public Map<Tuple<Integer, Integer>, List<Integer>> possibleMap = 
+			new HashMap<Tuple<Integer, Integer>, List<Integer>>();
+//	Table<String, String, Integer> possibleMap = HashBasedTable.create();
 	
 	
 	
 	// list of coordinates of existing locations for each number
+	// not used yet
 	public Map<Integer, List<Tuple<Integer, Integer>>> coords = 
 			new HashMap<Integer, List<Tuple<Integer, Integer>>>();
-	// list of available coordinates???
-//	public Map<Integer, List<Tuple<Integer, Integer>>> avail = 
-//			new HashMap<Integer, List<Tuple<Integer, Integer>>>();
+	// list of available coordinates??? also not used
+	public Map<Integer, List<Tuple<Integer, Integer>>> avail = 
+			new HashMap<Integer, List<Tuple<Integer, Integer>>>();
 	
-	// if i want to include notes
+	// if i want to include notes. but isn't this pretty much what possible and possibleMap are?
 //	public static ArrayList<Integer>[][] notes = (ArrayList<Integer>[][])new ArrayList[9][9];
 //	public static Map<Integer, Tuple<Tuple<Integer, Integer>, Tuple<Integer, Integer>>> notes =
 //	new HashMap<Integer, Tuple<Tuple<Integer, Integer>, Tuple<Integer, Integer>>>();
@@ -101,6 +108,11 @@ public class Board {
 			return;
 		}
 		
+		Tuple<Integer, Integer> t = new Tuple<Integer, Integer>(1, 2);
+		if (b.possibleMap.get(t) == null) {
+			System.out.println("This is a problem");
+		}
+		
 		// print out the starting board
 //		b.printBoard();
 		// match working solution to initial board state. now handled in boardInit()
@@ -116,22 +128,22 @@ public class Board {
 //		b.printCellPoss(4, 8);
 //		System.out.println();
 		
-		Tuple<Integer, Integer> t = new Tuple<Integer, Integer>(1, 1);
-		
-		// try to categorize logic by difficulty?
-		// fill easy squares first, when possible
-		b.logicP1();
-		
-//		b.checkPossible();
-//		b.printSol();
-		
-//		b.printCellPoss(2, 0);
-		
-		
 		// CHECKs INIT -- GOOD
 //		b.printBoard();
 //		b.printSol();
 		///////////////
+				
+		// try to categorize logic by difficulty?
+		// fill easy squares first, when possible
+		// start with checkForSoleCandidate()
+		// then maybe checkForUniqueCandidate()
+		// move up to checking if a certain number in some box is only possible in a certain row or col
+		// check for naked/hidden subsets
+		// finally implement x-wing
+		// if one becomes enlightened, one might try "forcing chain" -- see if, for a cell with only two possibilities,
+		// each possibility must lead to a specific result for some other cell
+				
+		
 		
 		int loop = 1;
 		while (loop == 1) {
@@ -176,6 +188,18 @@ public class Board {
 					for (int k = 0; k < 9; k++) {
 						possible[i][j][k] = 0;
 					}
+					Tuple<Integer, Integer> t = new Tuple<Integer, Integer>(i, j);
+					// NOTE: must put t into the map. NOT a different Tuple made from i, j. Take care when using
+					// mutable objects in a map, as the javadoc warns. this might cause problems later
+					possibleMap.put(t, new ArrayList<Integer>());
+//					if (possibleMap.containsKey(t)) {
+//						System.out.println("Map contains the key, as expected. We just put it there");
+//					} else {
+//						System.out.println("Why doesn't the map contain the key?");
+//					}
+					if (possibleMap.get(t) == null) {
+						System.out.println("The key maps to null.");
+					}
 				}
 				if (scanner.hasNextInt()) next = scanner.nextInt();
 			}
@@ -213,23 +237,6 @@ public class Board {
 			}
 		}
 		return 0;
-	}
-	
-	// look for squares where only 1 possible value could fill the square
-	// just based on checking rows, cols, and boxes
-	private int checkForSoleCandidate() {
-		int modified = 0;
-		for (int i = 0; i < 9; i++) {
-			for (int j = 0; j < 9; j++) {
-				// sol hasn't been filled in yet, but there is only 1 possibility for this square.
-				if (sol[i][j] == 0 && possible[i][j][1] == 0) {
-					sol[i][j] = possible[i][j][0];
-					modified = 1;
-					trimPossible(i, j, possible[i][j][0]);
-				}
-			}
-		}
-		return modified;
 	}
 	
 	// likely, the solution has been modified and now we have to update the
@@ -278,6 +285,7 @@ public class Board {
 				searchB = 0;
 				// iterate through array of possibilities for the square
 				for (int k = 0; k < 9; k++) {
+					// do the same thing as above, except we don't have to wait for corresponding row/col to be done
 					if (possible[((row / 3) * 3) + i][((col / 3) * 3) + j][k] == val) searchB = 1;
 					else if (possible[((row / 3) * 3) + i][((col / 3) * 3) + j][k] == 0) break;
 					if (searchB == 1) {
@@ -291,8 +299,26 @@ public class Board {
 		return 0;
 	}
 	
-	private int logicP1() {
-		return 0;
+	// look for squares where only 1 possible value could fill the square
+	// just based on checking rows, cols, and boxes
+	private int checkForSoleCandidate() {
+		int modified = 0;
+		for (int i = 0; i < 9; i++) {
+			for (int j = 0; j < 9; j++) {
+				// sol hasn't been filled in yet, but there is only 1 possibility for this square.
+				if (sol[i][j] == 0 && possible[i][j][1] == 0) {
+					sol[i][j] = possible[i][j][0];
+					modified = 1;
+					trimPossible(i, j, possible[i][j][0]);
+				}
+			}
+		}
+		return modified;
+	}
+	
+	private int checkForUniqueCandidate() {
+		int modified = 0;
+		return modified;
 	}
 	
 	// returns non-zero if the val being checked for is already present in the same row, col, or box
