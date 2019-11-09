@@ -1,7 +1,7 @@
 package sudokusolver;
 
-//import com.google.common.collect.Table;
-//import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
+import com.google.common.collect.HashBasedTable;
 
 import java.util.*;
 import java.io.*;
@@ -52,11 +52,13 @@ public class Board {
 	// working solution
 	public int[][] sol = new int[9][9];
 	// possible candidates for each cell
-	public int[][][] possible = new int[9][9][9];
+//	public int[][][] possible = new int[9][9][9];
 	// achieve same as possible array but maybe more cleanly. map a coordinate to a list of possibilities
-	public Map<Tuple<Integer, Integer>, List<Integer>> possibleMap = 
-			new HashMap<Tuple<Integer, Integer>, List<Integer>>();
-//	Table<String, String, Integer> possibleMap = HashBasedTable.create();
+	// would need to keep a reference of each tuple instead of making new ones to use as keys, seems bad
+//	public Map<Tuple<Integer, Integer>, List<Integer>> possibleMap = 
+//			new HashMap<Tuple<Integer, Integer>, List<Integer>>();
+	// use google's HashBasedTable to achieve same thing
+	Table<Integer, Integer, List<Integer>> possibleMapTable = HashBasedTable.create();
 	
 	
 	
@@ -109,7 +111,8 @@ public class Board {
 		}
 		
 		Tuple<Integer, Integer> t = new Tuple<Integer, Integer>(1, 2);
-		if (b.possibleMap.get(t) == null) {
+//		if (b.possibleMap.get(t) == null) {
+		if (b.possibleMapTable.get(1, 2) == null) {
 			System.out.println("This is a problem");
 		}
 		
@@ -183,23 +186,16 @@ public class Board {
 				boardStart[i][j] = next;
 				sol[i][j] = next;
 				if (next != 0) {
-					possible[i][j][0] = -1;
+//					possible[i][j][0] = -1;
 				} else {
-					for (int k = 0; k < 9; k++) {
-						possible[i][j][k] = 0;
-					}
-					Tuple<Integer, Integer> t = new Tuple<Integer, Integer>(i, j);
-					// NOTE: must put t into the map. NOT a different Tuple made from i, j. Take care when using
-					// mutable objects in a map, as the javadoc warns. this might cause problems later
-					possibleMap.put(t, new ArrayList<Integer>());
-//					if (possibleMap.containsKey(t)) {
-//						System.out.println("Map contains the key, as expected. We just put it there");
-//					} else {
-//						System.out.println("Why doesn't the map contain the key?");
+//					for (int k = 0; k < 9; k++) {
+//						possible[i][j][k] = 0;
 //					}
-					if (possibleMap.get(t) == null) {
-						System.out.println("The key maps to null.");
-					}
+//					Tuple<Integer, Integer> t = new Tuple<Integer, Integer>(i, j);
+					// NOTE: must put t into the map. NOT a different Tuple made from i, j. Take care when using
+					// mutable objects in a map, as the javadoc warns. this might cause problems later -- update: it did
+//					possibleMap.put(t, new ArrayList<Integer>());
+					possibleMapTable.put(i, j, new ArrayList<Integer>());
 				}
 				if (scanner.hasNextInt()) next = scanner.nextInt();
 			}
@@ -208,13 +204,13 @@ public class Board {
 		scanner.close();
 	}
 	
+	// not used anymore
 	private void solInit() {
 		//sol = board;
 		for (int i = 0; i < 9; i++) {
 			for (int j = 0; j < 9; j++) {
 				sol[i][j] = boardStart[i][j];
-				if (boardStart[i][j] != 0) possible[i][j][0] = -1;
-				//possible[i][j][0] = board[i][j];
+//				if (boardStart[i][j] != 0) possible[i][j][0] = -1;
 			}
 		}
 	}
@@ -224,14 +220,17 @@ public class Board {
 		for (int i = 0; i < 9; i++) {
 			for (int j = 0; j < 9; j++) {
 				// skip the square if the value has already been correctly set
-				if (boardStart[i][j] != 0 || possible[i][j][0] == -1) continue;
+//				if (boardStart[i][j] != 0 || possible[i][j][0] == -1) continue;
+				if (boardStart[i][j] != 0 || possibleMapTable.get(i, j) == null) continue;
+				
 				// populate what the square could possibly hold
 				// simply based on checking row, col, and box
 				for (int k = 1; k < 10; k++) {
 					if(checkVal(i, j, k) == 0) {
-						int x = 0;
-						while (possible[i][j][x] > 0) x++;
-						possible[i][j][x] = k;
+//						int x = 0;
+//						while (possible[i][j][x] > 0) x++;
+//						possible[i][j][x] = k;
+						possibleMapTable.get(i, j).add(k);
 					}
 				}
 			}
@@ -250,33 +249,38 @@ public class Board {
 		for (int i = 0; i < 9; i++) {
 			// replacingR, replacingC get set after we've found an element of possible that needs to be trimmed
 			// doneR, doneC are set after we've finished iterating through the array of possible candidates
-			replacingR = 0;
-			replacingC = 0;
-			doneR = 0;
-			doneC = 0;
+//			replacingR = 0;
+//			replacingC = 0;
+//			doneR = 0;
+//			doneC = 0;
 			// check values within possible array. would be way easier with lists
-			for (int j = 0; j < 9; j++) {
-				// finish after doneR and doneC are both 1 also
-				if (doneR == 1 && doneC == 1) break;
-				
-				// when we find an element to replace, we delete and begin shifting elements down
-				// to fill the empty (0) space in the array, maintaining order -- although not necessary
-				if (possible[row][i][j] == val) replacingR = 1;
-				else if (possible[row][i][j] == 0) doneR = 1;
-				// by checking doneR, we improve efficiency, but don't affect correctness
-				if (replacingR == 1 & doneR == 0) {
-					if (j == 8) possible[row][i][j] = 0;
-					else possible[row][i][j] = possible[row][i][j + 1];
-				}
-				
-				// identical to above but for col instead of row
-				if (possible[i][col][j] == val) replacingC = 1;
-				else if (possible[i][col][j] == 0) doneC = 1;
-				if (replacingC == 1 & doneC == 0) {
-					if (j == 8) possible[i][col][j] = 0;
-					else possible[i][col][j] = possible[i][col][j + 1];
-				}
-			}
+//			for (int j = 0; j < 9; j++) {
+//				// finish after doneR and doneC are both 1 also
+//				if (doneR == 1 && doneC == 1) break;
+//				
+//				// when we find an element to replace, we delete and begin shifting elements down
+//				// to fill the empty (0) space in the array, maintaining order -- although not necessary
+//				if (possible[row][i][j] == val) replacingR = 1;
+//				else if (possible[row][i][j] == 0) doneR = 1;
+//				// by checking doneR, we improve efficiency, but don't affect correctness
+//				if (replacingR == 1 & doneR == 0) {
+//					if (j == 8) possible[row][i][j] = 0;
+//					else possible[row][i][j] = possible[row][i][j + 1];
+//				}
+//				
+//				// identical to above but for col instead of row
+//				if (possible[i][col][j] == val) replacingC = 1;
+//				else if (possible[i][col][j] == 0) doneC = 1;
+//				if (replacingC == 1 & doneC == 0) {
+//					if (j == 8) possible[i][col][j] = 0;
+//					else possible[i][col][j] = possible[i][col][j + 1];
+//				}
+//			}
+			
+			// these two lines do what that whole for loop does
+			// NOTE: if val is not an element of that list, remove does not modify the list
+			if (possibleMapTable.get(row, i) != null) possibleMapTable.get(row, i).remove(Integer.valueOf(val));
+			if (possibleMapTable.get(i, col) != null) possibleMapTable.get(i, col).remove(Integer.valueOf(val));
 		}
 		// search within the box
 		int searchB = 0;
@@ -284,15 +288,20 @@ public class Board {
 			for (int j = 0; j < 3; j++) {
 				searchB = 0;
 				// iterate through array of possibilities for the square
-				for (int k = 0; k < 9; k++) {
-					// do the same thing as above, except we don't have to wait for corresponding row/col to be done
-					if (possible[((row / 3) * 3) + i][((col / 3) * 3) + j][k] == val) searchB = 1;
-					else if (possible[((row / 3) * 3) + i][((col / 3) * 3) + j][k] == 0) break;
-					if (searchB == 1) {
-						if (k == 8) possible[((row / 3) * 3) + i][((col / 3) * 3) + j][k] = 0;
-						else possible[((row / 3) * 3) + i][((col / 3) * 3) + j][k] = 
-								possible[((row / 3) * 3) + i][((col / 3) * 3) + j][k + 1];
-					}
+//				for (int k = 0; k < 9; k++) {
+//					// do the same thing as above, except we don't have to wait for corresponding row/col to be done
+//					if (possible[((row / 3) * 3) + i][((col / 3) * 3) + j][k] == val) searchB = 1;
+//					else if (possible[((row / 3) * 3) + i][((col / 3) * 3) + j][k] == 0) break;
+//					if (searchB == 1) {
+//						if (k == 8) possible[((row / 3) * 3) + i][((col / 3) * 3) + j][k] = 0;
+//						else possible[((row / 3) * 3) + i][((col / 3) * 3) + j][k] = 
+//								possible[((row / 3) * 3) + i][((col / 3) * 3) + j][k + 1];
+//					}
+//				}
+				
+				// this line does what that for loop does
+				if (possibleMapTable.get(((row / 3) * 3) + i, ((col / 3) * 3) + j) != null) {
+					possibleMapTable.get(((row / 3) * 3) + i, ((col / 3) * 3) + j).remove(Integer.valueOf(val));
 				}
 			}
 		}
@@ -306,10 +315,13 @@ public class Board {
 		for (int i = 0; i < 9; i++) {
 			for (int j = 0; j < 9; j++) {
 				// sol hasn't been filled in yet, but there is only 1 possibility for this square.
-				if (sol[i][j] == 0 && possible[i][j][1] == 0) {
-					sol[i][j] = possible[i][j][0];
+//				if (sol[i][j] == 0 && possible[i][j][1] == 0) {
+				if (sol[i][j] == 0 && possibleMapTable.get(i, j).size() == 1) {
+//					sol[i][j] = possible[i][j][0];
+					sol[i][j] = possibleMapTable.get(i, j).get(0);
 					modified = 1;
-					trimPossible(i, j, possible[i][j][0]);
+//					trimPossible(i, j, possible[i][j][0]);
+					trimPossible(i, j, possibleMapTable.get(i, j).get(0));
 				}
 			}
 		}
@@ -367,11 +379,18 @@ public class Board {
 	
 	// for testing: print the current possibilities for a given cell
 	private void printCellPoss(int row, int col) {
-		System.out.print("Possibilites for Row " + row + ", Column " + col + ": " + possible[row][col][0]);
+//		System.out.print("Possibilites for Row " + row + ", Column " + col + ": " + possible[row][col][0]);
+		System.out.print("Possibilites for Row " + row + ", Column " + col + ": ");
 		
-		int x = 1;
-		while (possible[row][col][x] > 0) {
-			System.out.print(", " + possible[row][col][x++]);
+//		int x = 1;
+//		while (possible[row][col][x] > 0) {
+//			System.out.print(", " + possible[row][col][x++]);
+//		}
+		
+		if (possibleMapTable.get(row, col).isEmpty()) {
+			System.out.print("None. Maybe it's already filled?");
+		} else {
+			System.out.print(possibleMapTable.get(row, col));
 		}
 		
 		System.out.println();
