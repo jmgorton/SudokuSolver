@@ -120,7 +120,6 @@ public class Board {
 		String s2 = "./src/sudokusolver/board-med-1.txt";
 		Board b2 = new Board(s2);
 		
-		// this one introduces a bug!!
 		String s3 = "./src/sudokusolver/board-hard-1.txt";
 		Board b3 = new Board(s3);
 				
@@ -414,11 +413,8 @@ public class Board {
 	private int checkForUniqueCandidate() {
 		int modified = 0;
 		
-		printSol();
-		if (checkForUniqueCandidateByRowCol() != 0) modified = 1; // after this stage, it is correct, but how?
-		printSol();
+		if (checkForUniqueCandidateByRowCol() != 0) modified = 1;
 		if (checkForUniqueCandidateByBox() != 0) modified = 1; // after this stage, it is incorrect
-		printSol();
 		
 		return modified;
 	}
@@ -468,16 +464,17 @@ public class Board {
 		
 		for (int searchedNum = 1; searchedNum < 10; searchedNum++) {
 			// cycle through the boxes
-			for (int i = 0; i < 3; i++) {
-				for (int j = 0; j < 3; j++) {
+			for (int boxRow = 0; boxRow < 3; boxRow++) {
+				for (int boxCol = 0; boxCol < 3; boxCol++) {
 					toCheck.clear();
 					
+					// TODO could speed up if we used the row/col/boxOptions lists here
 					// search within the box
 					for (int row = 0; row < 3; row++) {
 						for (int col = 0; col < 3; col++) {
 							// iterate through array of possibilities for the square				
-							if (possibleMapTable.get((3 * i) + row, (3 * j) + col) != null
-									&& possibleMapTable.get((3 * i) + row, (3 * j) + col).contains(searchedNum)) {
+							if (possibleMapTable.get((3 * boxRow) + row, (3 * boxCol) + col) != null
+									&& possibleMapTable.get((3 * boxRow) + row, (3 * boxCol) + col).contains(searchedNum)) {
 								// encodes each square in the box with a value
 								// like:
 								//		0 1 2
@@ -491,9 +488,9 @@ public class Board {
 					
 					if (toCheck.size() == 1) {
 						// decodes the thing from right up there ^^
-						sol[(3 * i) + (toCheck.get(0) % 3)][(3 * j) + (toCheck.get(0) / 3)] = searchedNum;
+						sol[(3 * boxRow) + (toCheck.get(0) / 3)][(3 * boxCol) + (toCheck.get(0) % 3)] = searchedNum;
 						modified = 1;
-						trimPossible((3 * i) + (toCheck.get(0) % 3), (3 * j) + (toCheck.get(0) / 3), searchedNum);
+						trimPossible((3 * boxRow) + (toCheck.get(0) / 3), (3 * boxCol) + (toCheck.get(0) % 3), searchedNum);
 					}
 				}
 			}
