@@ -11,7 +11,7 @@ import java.io.*;
 @SuppressWarnings("unused")
 public class Board {
 	
-	// possible ways to initialize board ??
+	// possible ways to initialize board ... ?
 //	List<List<Integer>> board = new ArrayList<List<Integer>>();
 //	ArrayList<Integer>[][] board = (ArrayList<Integer>[][])new ArrayList[9][9];
 //	public static final int[][] board = new int[9][9];
@@ -42,12 +42,16 @@ public class Board {
 //	board[3][5] = 7;
 //	board[3][7] = 8;
 	
-	// not used yet. name self-explanatory. still haven't decided if these are useful
-	// not yet fully maintained through the life-cycle of the program.
+	// not used yet. name self-explanatory
 //	public int[][] rowOptions = new int[9][9];	
 	public Map<Integer, List<Integer>> rowOptions = new HashMap<Integer, List<Integer>>();
 //	public int[][] colOptions = new int[9][9];	
 	public Map<Integer, List<Integer>> colOptions = new HashMap<Integer, List<Integer>>();
+	// boxes are arranged like:
+	//		1 2 3
+	//		4 5 6
+	//		7 8 9
+	// like reading a book
 //	public int[][] boxOptions = new int[9][9];
 	public Map<Integer, List<Integer>> boxOptions = new HashMap<Integer, List<Integer>>();
 	
@@ -123,32 +127,47 @@ public class Board {
 		String s3 = "./src/sudokusolver/board-hard-1.txt";
 		Board b3 = new Board(s3);
 		
+		// on this board, after the first trimPossibleByBlock -- at least before Positive was implemented --
+		// we get a hidden pair of 6/7 in row 3 cols 7 & 8. investigate, use for testing
 		String s4 = "./src/sudokusolver/board-evil-1.txt";
 		Board b4 = new Board(s4);
-				
+
+		
+		
+		
+		// ***** simplify testing new boards *****
+		Board current = b4;
+//		Board current = new Board(s);
+		
+		
+		
+		
 		// print out the starting board
-//		b.printBoard();
+//		current.printBoard();
 		// match working solution to initial board state. now handled in boardInit()
-//		b.solInit();
+//		current.solInit();
 		
 		// determine what could possibly be stored in each square
 		// just based on checking row, col, and box
 		// cmd-opt-r to rename all in this block simultaneously in eclipse - be careful
-		b.fillPossible();
-		b2.fillPossible();
-		b3.fillPossible();
-		b4.fillPossible();
+		current.fillPossible();
+
+		// options seem to be initialized correctly
+//		for (int i = 0; i < 9; i++) {
+//			if (current.rowOptions.get(i) != null) System.out.println("length of row options at " + i + ": " + current.rowOptions.get(i).size());
+//			if (current.colOptions.get(i) != null) System.out.println("length of col options at " + i + ": " + current.colOptions.get(i).size());
+//			if (current.boxOptions.get(i) != null) System.out.println("length of box options at " + i + ": " + current.boxOptions.get(i).size());
+//		}
 		
-		
-//		b.printCellPoss(0, 0);
-//		b.printCellPoss(0, 4);
-//		b.printCellPoss(0, 7);
-//		b.printCellPoss(4, 8);
+//		current.printCellPoss(0, 0);
+//		current.printCellPoss(0, 4);
+//		current.printCellPoss(0, 7);
+//		current.printCellPoss(4, 8);
 //		System.out.println();
 		
 		// CHECKs INIT -- GOOD
-//		b.printBoard();
-//		b.printSol();
+//		current.printBoard();
+//		current.printSol();
 		///////////////
 				
 		// try to categorize logic by difficulty?
@@ -161,7 +180,7 @@ public class Board {
 		// if one becomes enlightened, one might try "forcing chain" -- see if, for a cell with only two possibilities,
 		// each possibility must lead to a specific result for some other cell
 		
-//		b4.printBoard();
+//		current.printBoard();
 		
 		boolean loopB = true;		
 		// board b can be fully solved by either method alone
@@ -177,36 +196,36 @@ public class Board {
 			while (innerLoop2 != 0) {
 				innerLoop1 = 1;
 				while (innerLoop1 != 0) {
-//					b3.printSol();
-					innerLoop1 = b4.checkForSoleCandidate();
+//					current.printSol();
+					innerLoop1 = current.checkForSoleCandidate();
 					if (innerLoop1 != 0) System.out.println("Added some sole candidates");
-//					System.out.println("Added some sole candidates");
 				}
-//				b3.printSol();
-				innerLoop2 = b4.checkForUniqueCandidate();
+//				current.printSol();
+				innerLoop2 = current.checkForUniqueCandidate();
 				if (innerLoop2 != 0) System.out.println("Added some unique candidates");
-//				System.out.println("Added some unique candidates");
 			}
-//			b4.printSol();
-			innerLoop3 = b4.trimPossibleByBlock();
+//			current.printSol();
+			innerLoop3 = current.trimPossibleByBlock();
 			if (innerLoop3 != 0) System.out.println("Did some trimming (block)");
-//			System.out.println("Did some trimming (block)");
 		}
 		
 		// CHECK SOLUTIONS
-//		b.printSol();
+//		current.printSol();
 		System.out.println();
+		System.out.println("Solution is " + (current.checkSol() == 0 ? "correct." : "incorrect or incomplete."));
 		
-//		System.out.println("Solution is " + (b.checkSol() == 0 ? "correct." : "incorrect or incomplete."));
-//		System.out.println("Solution is " + (b2.checkSol() == 0 ? "correct." : "incorrect or incomplete."));
-		System.out.println("Solution is " + (b4.checkSol() == 0 ? "correct." : "incorrect or incomplete."));
+		// when the puzzle doesn't finish, seems like some of the lengths are off. sign of an issue
+		// the length is never greater than what it should be, always less
+		for (int i = 0; i < 9; i++) {
+			if (current.rowOptions.get(i) != null) System.out.println("length of row options at " + i + ": " + current.rowOptions.get(i).size());
+			if (current.colOptions.get(i) != null) System.out.println("length of col options at " + i + ": " + current.colOptions.get(i).size());
+			if (current.boxOptions.get(i) != null) System.out.println("length of box options at " + i + ": " + current.boxOptions.get(i).size());
+		}
 		
-//		b.printInitandSol();
+//		current.printInitandSol();
 		
 	}
-	
-	// TODO make the return types smart
-	
+		
 	// set up the board initially
 	private void boardInit() throws FileNotFoundException {
 		File f = new File(boardFile);
@@ -228,15 +247,19 @@ public class Board {
 			for (int j = 0; j < 9; j++) {
 				boardStart[i][j] = next;
 				sol[i][j] = next;
-//				possibleMapTable.put(i, j, new ArrayList<Integer>());
+
 				if (next == 0) {
 					possibleMapTable.put(i, j, new ArrayList<Integer>());
 				} else {
 					rowOptions.get(i).remove(Integer.valueOf(next));
 					colOptions.get(j).remove(Integer.valueOf(next));
-					// figure this out later
-//					boxOptions
+
+					int row = i / 3;
+					int col = j / 3;
+					boxOptions.get((row * 3) + col).remove(Integer.valueOf(next));
 				}
+				
+				// we're pretty much assuming the file is formatted correctly
 				if (scanner.hasNextInt()) next = scanner.nextInt();
 			}
 		}
@@ -244,14 +267,15 @@ public class Board {
 		scanner.close();
 	}
 	
-	// not used anymore
-	private void solInit() {
-		//sol = board;
-		for (int i = 0; i < 9; i++) {
-			for (int j = 0; j < 9; j++) {
-				sol[i][j] = boardStart[i][j];
-			}
-		}
+	// set the working solution, maintain whatever other lists we're working with
+	private void setSolCell(int row, int col, int val) {
+		sol[row][col] = val;
+		
+		rowOptions.get(row).remove(Integer.valueOf(val));
+		colOptions.get(col).remove(Integer.valueOf(val));
+		boxOptions.get(((row / 3) * 3) + (col / 3)).remove(Integer.valueOf(val));
+		
+		trimPossible(row, col, val);
 	}
 	
 	// determine what could possibly be stored in each square
@@ -316,7 +340,76 @@ public class Board {
 	private int trimPossibleByBlockPositive() {
 		int modified = 0;
 		
-		// TODO
+		List<Integer> toCheck = new ArrayList<Integer>();
+		
+		for (int searchedNum = 1; searchedNum < 10; searchedNum++) {
+			// cycle through the boxes
+			for (int boxRow = 0; boxRow < 3; boxRow++) {
+				for (int boxCol = 0; boxCol < 3; boxCol++) {
+//					if (!boxOptions.get(boxRow * 3 + boxCol).contains(searchedNum)) continue;
+					toCheck.clear();
+					
+					// TODO could speed up if we used the row/col/boxOptions lists here
+					// search within the box
+					for (int row = 0; row < 3; row++) {
+						for (int col = 0; col < 3; col++) {
+							// iterate through array of possibilities for the square				
+							if (possibleMapTable.get((3 * boxRow) + row, (3 * boxCol) + col) != null
+									&& possibleMapTable.get((3 * boxRow) + row, (3 * boxCol) + col).contains(searchedNum)) {
+								// encodes each square in the box with a value
+								// like:
+								//		0 1 2
+								//		3 4 5
+								//		6 7 8
+								// there's probably an easier way
+								toCheck.add((3 * row) + col);
+							}
+						}
+					}
+					
+					if (!toCheck.isEmpty()) {
+						// see if every option in toCheck is in the same row or column
+						int row = toCheck.get(0) / 3;
+						int col = toCheck.get(0) % 3;
+						for (Integer elt : toCheck) {
+							if (row != -1 && row != elt / 3) {
+								row = -1;
+							}
+							if (col != -1 && col != elt % 3) {
+								col = -1;
+							}
+							if (row == -1 && col == -1) {
+								break;
+							}
+						}
+						// if row is not -1, then all elements are in this block are within the same row
+						if (row != -1) {
+							for (int i = 0; i < 9; i++) {
+								// don't want to affect any of the items within this box. only outside
+								if (i / 3 == boxCol) continue;
+								if (possibleMapTable.get((boxRow * 3) + row, i) != null
+										&& possibleMapTable.get((boxRow * 3) + row, i).contains(searchedNum)) {
+									possibleMapTable.get((boxRow * 3) + row, i).remove(Integer.valueOf(searchedNum));
+									modified = 1;
+								}
+							}
+						}
+						// if col is not -1, then all elements are in this block are within the same col
+						if (col != -1) {
+							for (int i = 0; i < 9; i++) {
+								// don't want to affect any of the items within this box. only outside
+								if (i / 3 == boxRow) continue;
+								if (possibleMapTable.get(i, (boxCol * 3) + col) != null
+										&& possibleMapTable.get(i, (boxCol * 3) + col).contains(searchedNum)) {
+									possibleMapTable.get(i, (boxCol * 3) + col).remove(Integer.valueOf(searchedNum));
+									modified = 1;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 		
 		return modified;
 	}
@@ -406,9 +499,16 @@ public class Board {
 			for (int j = 0; j < 9; j++) {
 				// sol hasn't been filled in yet, but there is only 1 possibility for this square.
 				if (sol[i][j] == 0 && possibleMapTable.get(i, j).size() == 1) {
-					sol[i][j] = possibleMapTable.get(i, j).get(0);
+//					sol[i][j] = possibleMapTable.get(i, j).get(0);
+//					
+//					rowOptions.get(i).remove(Integer.valueOf(possibleMapTable.get(i, j).get(0)));
+//					colOptions.get(j).remove(Integer.valueOf(possibleMapTable.get(i, j).get(0)));
+//					boxOptions.get(((i / 3) * 3) + (j / 3)).remove(Integer.valueOf(possibleMapTable.get(i, j).get(0)));
+//					
+//					modified = 1;
+//					trimPossible(i, j, possibleMapTable.get(i, j).get(0));
+					setSolCell(i, j, possibleMapTable.get(i, j).get(0));
 					modified = 1;
-					trimPossible(i, j, possibleMapTable.get(i, j).get(0));
 				}
 			}
 		}
@@ -439,6 +539,7 @@ public class Board {
 			for (int i = 0; i < 9; i++) {
 				toCheckRow.clear();
 				toCheckCol.clear();
+				// TODO could speed this up a lot if we used row/col/boxOptions
 				for (int j = 0; j < 9; j++) {
 					if (possibleMapTable.get(i, j) != null && possibleMapTable.get(i, j).contains(searchedNum)) {
 						toCheckRow.add(j);
@@ -448,14 +549,28 @@ public class Board {
 					}
 				}
 				if (toCheckRow.size() == 1) {
-					sol[i][toCheckRow.get(0)] = searchedNum;
+//					sol[i][toCheckRow.get(0)] = searchedNum;
+//					
+//					rowOptions.get(i).remove(Integer.valueOf(searchedNum));
+//					colOptions.get(toCheckRow.get(0)).remove(Integer.valueOf(searchedNum));
+//					boxOptions.get(((i / 3) * 3) + (toCheckRow.get(0) / 3)).remove(Integer.valueOf(searchedNum));
+//					
+//					modified = 1;
+//					trimPossible(i, toCheckRow.get(0), searchedNum);
+					setSolCell(i, toCheckRow.get(0), searchedNum);
 					modified = 1;
-					trimPossible(i, toCheckRow.get(0), searchedNum);
 				}
 				if (toCheckCol.size() == 1) {
-					sol[toCheckCol.get(0)][i] = searchedNum;
+//					sol[toCheckCol.get(0)][i] = searchedNum;
+//					
+//					rowOptions.get(toCheckRow.get(0)).remove(Integer.valueOf(searchedNum));
+//					colOptions.get(i).remove(Integer.valueOf(searchedNum));
+//					boxOptions.get(((toCheckRow.get(0) / 3) * 3) + (i / 3)).remove(Integer.valueOf(searchedNum));
+//					
+//					modified = 1;
+//					trimPossible(toCheckCol.get(0), i, searchedNum);
+					setSolCell(toCheckCol.get(0), i, searchedNum);
 					modified = 1;
-					trimPossible(toCheckCol.get(0), i, searchedNum);
 				}
 			}
 		}
@@ -496,9 +611,16 @@ public class Board {
 					
 					if (toCheck.size() == 1) {
 						// decodes the thing from right up there ^^
-						sol[(3 * boxRow) + (toCheck.get(0) / 3)][(3 * boxCol) + (toCheck.get(0) % 3)] = searchedNum;
+//						sol[(3 * boxRow) + (toCheck.get(0) / 3)][(3 * boxCol) + (toCheck.get(0) % 3)] = searchedNum;
+//						
+//						rowOptions.get((3 * boxRow) + (toCheck.get(0) / 3)).remove(Integer.valueOf(searchedNum));
+//						colOptions.get((3 * boxCol) + (toCheck.get(0) % 3)).remove(Integer.valueOf(searchedNum));
+//						boxOptions.get((((3 * boxRow) + (toCheck.get(0) / 3) / 3) * 3) + ((3 * boxCol) + (toCheck.get(0) % 3) / 3)).remove(Integer.valueOf(searchedNum));
+//						
+//						modified = 1;
+//						trimPossible((3 * boxRow) + (toCheck.get(0) / 3), (3 * boxCol) + (toCheck.get(0) % 3), searchedNum);
+						setSolCell((3 * boxRow) + (toCheck.get(0) / 3), (3 * boxCol) + (toCheck.get(0) % 3), searchedNum);
 						modified = 1;
-						trimPossible((3 * boxRow) + (toCheck.get(0) / 3), (3 * boxCol) + (toCheck.get(0) % 3), searchedNum);
 					}
 				}
 			}
