@@ -7,6 +7,7 @@ import java.util.*;
 import java.io.*;
 
 // make this work for nxn sudoku puzzles (n must be a square)
+// to understand the moves, visit https://www.kristanix.com/sudokuepic/sudoku-solving-techniques.php
 @SuppressWarnings("unused")
 public class Board {
 	
@@ -91,7 +92,7 @@ public class Board {
 			boardInit();
 		} catch (FileNotFoundException e) {
 			System.out.println("File does not exist?");
-			return;
+			throw new RuntimeException(e);
 		}
 		
 		// working solution
@@ -110,21 +111,15 @@ public class Board {
 //				new HashMap<Integer, List<Tuple<Integer, Integer>>>();
 	}
 	
-	// instead of try-catch, could just throw FNF exception here
+	// instead of try-catch, could just throw FNF exception here?
 	public static void main(String[] args) {
 //		String s = "Users/jaredgorton/eclipse-workspace/SudokuSolver/src/sudokusolver/sudokuboard.txt";
-		String s = "./src/sudokusolver/sudokuboard.txt";	// project root directory base
+		String s = "./src/sudokusolver/board-easy-1.txt";	// project root directory base
 		Board b = new Board(s);
 		
-//		try {
-//			b.boardInit();
-//		}
-//		catch (FileNotFoundException e) {
-//			System.out.println("File does not exist. Exiting.\n");
-//			return;
-//		}
-		
-		
+		String s2 = "./src/sudokusolver/board-med-1.txt";
+		Board b2 = new Board(s2);
+				
 		// print out the starting board
 //		b.printBoard();
 		// match working solution to initial board state. now handled in boardInit()
@@ -133,6 +128,7 @@ public class Board {
 		// determine what could possibly be stored in each square
 		// just based on checking row, col, and box
 		b.fillPossible();
+		b2.fillPossible();
 		
 		
 //		b.printCellPoss(0, 0);
@@ -158,36 +154,56 @@ public class Board {
 		
 //		b.printBoard();
 		
-		boolean loopB = true;
-		int loop = 1;
-		while (loop == 1) {
-//		while (loopB) {
-			// with current game loaded, either of these methods can fully solve the board on their own
-//			loop = b.checkForSoleCandidate();
-			loop = b.checkForUniqueCandidate();
+		boolean loopB = true;		
+		// board b can be fully solved by either method alone
 
-//			System.out.println("\n");
-//			b.printSol();
+		int innerLoop1;
+		int innerLoop2;
+		int innerLoop3;
+		int[] loop = new int[3];
+		
+		innerLoop3 = 1;
+		while (innerLoop3 == 1) {
+			innerLoop2 = 1;
+			while (innerLoop2 == 1) {
+				innerLoop1 = 1;
+				while (innerLoop1 == 1) {
+					innerLoop1 = b2.checkForSoleCandidate();
+					if (innerLoop1 == 1) System.out.println("Added some sole candidates");
+//					System.out.println("Added some sole candidates");
+				}
+				innerLoop2 = b2.checkForUniqueCandidate();
+				if (innerLoop2 == 1) System.out.println("Added some unique candidates");
+//				System.out.println("Added some unique candidates");
+			}
+			b2.printSol();
+			innerLoop3 = b2.trimPossibleByBlock();
+			if (innerLoop3 == 1) System.out.println("Did some trimming (block)");
+//			System.out.println("Did some trimming (block)");
 		}
-				
-//		b.printSol();
-		System.out.println("Solution is " + (b.checkSol() == 0 ? "correct." : "incorrect or incomplete."));
 		
 		// CHECK SOLUTIONS
 //		b.printSol();
 //		System.out.println();
 		
+//		System.out.println("Solution is " + (b.checkSol() == 0 ? "correct." : "incorrect or incomplete."));
+		System.out.println("Solution is " + (b2.checkSol() == 0 ? "correct." : "incorrect or incomplete."));
+		
 //		b.printInitandSol();
 		
 	}
 	
+	// TODO make the return types smart
+	
+	// set up the board initially
 	private void boardInit() throws FileNotFoundException {
 		File f = new File(boardFile);
 		
 		Scanner scanner = null;
 		try {
-			if (f.exists()) scanner = new Scanner(f);
-			else return;
+//			if (f.exists()) scanner = new Scanner(f);
+//			else return;
+			scanner = new Scanner(f);
 		} catch(Exception ex) {
 			ex.printStackTrace();
 			return;
@@ -258,7 +274,6 @@ public class Board {
 			if (possibleMapTable.get(i, col) != null) possibleMapTable.get(i, col).remove(Integer.valueOf(val));
 		}
 		// search within the box
-		int searchB = 0;
 		for (int i = 0; i < 3; i++) {
 			for (int j = 0; j < 3; j++) {
 				// iterate through array of possibilities for the square				
@@ -272,6 +287,100 @@ public class Board {
 			possibleMapTable.remove(row, col);
 		}
 		return 0;
+	}
+
+	private int trimPossibleByBlock() {
+		int modified = 0;
+		
+		if (trimPossibleByBlockPositive() != 0) modified = 1;
+		if (trimPossibleByBlockNegative() != 0) modified = 1;
+		
+		return modified;
+	}
+	
+	// if, for some number, all the candidates within a certain block are within the same row or col,
+	// that number within that block will be in that row or col,
+	// and any other candidates for that number in that row or col outside of the block can be removed
+	private int trimPossibleByBlockPositive() {
+		int modified = 0;
+		
+		
+		
+		return modified;
+	}
+	
+	// if, for some number, within some row or col all the candidates are within a single block,
+	// that number within that row or col will be within that block,
+	// any other candidates for that number in the block but outside the row or col can be removed.
+	private int trimPossibleByBlockNegative() {
+		int modified = 0;
+		
+		List<Integer> toCheckRow = new ArrayList<Integer>();
+		List<Integer> toCheckCol = new ArrayList<Integer>();
+		
+		for (int searchedNum = 1; searchedNum < 10; searchedNum++) {
+			for (int i = 0; i < 9; i++) {
+				toCheckRow.clear();
+				toCheckCol.clear();
+				for (int j = 0; j < 9; j++) {
+					if (possibleMapTable.get(i, j) != null && possibleMapTable.get(i, j).contains(searchedNum)) {
+						toCheckRow.add(j);
+					}
+					if (possibleMapTable.get(j, i) != null && possibleMapTable.get(j, i).contains(searchedNum)) {
+						toCheckCol.add(j);
+					}
+				}
+				
+				if (!toCheckRow.isEmpty()) {
+					// block will be 0, 1, or 2. it will help us remember which block the element elt is in
+					int block = toCheckRow.get(0) / 3;
+					for (Integer elt : toCheckRow) {
+						if (block != elt / 3) {
+							block = -1;
+							break;
+						}
+					}
+					// if block is not -1, then all elements are in the same block, which is stored in block
+					if (block != 1) {
+						for (int _i = 0; _i < 3; _i++) {
+							// i is the row to avoid in this case. i is the row that we are preserving the possible map
+							if (_i == i % 3) continue;
+							for (int _j = 0; _j < 3; _j++) {
+								if (possibleMapTable.get(((i / 3) * 3) + _i, (block * 3) + _j) != null 
+										&& possibleMapTable.get(((i / 3) * 3) + _i, (block * 3) + _j).contains(searchedNum)) {
+									possibleMapTable.get(((i / 3) * 3) + _i, (block * 3) + _j).remove(searchedNum);
+								}
+							}
+						}
+					}
+				}
+				if (!toCheckCol.isEmpty()) {
+					// do the same for columns
+					int block = toCheckCol.get(0) / 3;
+					for (Integer elt : toCheckCol) {
+						if (block != elt / 3) {
+							block = -1;
+							break;
+						}
+					}
+					// if block is not -1, then all elements are in the same block, which is stored in block
+					if (block != 1) {
+						for (int _i = 0; _i < 3; _i++) {
+							// i is the col to avoid in this case. i is the col that we are preserving the possible map
+							if (_i == i % 3) continue;
+							for (int _j = 0; _j < 3; _j++) {
+								if (possibleMapTable.get((block * 3) + _j, ((i / 3) * 3) + _i) != null 
+										&& possibleMapTable.get((block * 3) + _j, ((i / 3) * 3) + _i).contains(searchedNum)) {
+									possibleMapTable.get((block * 3) + _j, ((i / 3) * 3) + _i).remove(searchedNum);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		return modified;
 	}
 	
 	// look for squares where only 1 possible value could fill the square
@@ -291,6 +400,8 @@ public class Board {
 		return modified;
 	}
 	
+	// look for rows, cols, and boxes in which some number has only a single option for placement
+	// and place it there
 	private int checkForUniqueCandidate() {
 		int modified = 0;
 		
@@ -300,6 +411,8 @@ public class Board {
 		return modified;
 	}
 	
+	// look for rows and cols in which some number has only a single option for placement
+	// and place it there
 	private int checkForUniqueCandidateByRowCol() {
 		int modified = 0;
 		
@@ -334,9 +447,47 @@ public class Board {
 		return modified;
 	}
 	
+	// look for boxes in which some number has only a single option for placement
+	// and place it there
 	private int checkForUniqueCandidateByBox() {
-		// TODO implement
-		return 0;
+		int modified = 0;
+		
+		List<Integer> toCheck = new ArrayList<Integer>();
+		
+		for (int searchedNum = 1; searchedNum < 10; searchedNum++) {
+			// cycle through the boxes
+			for (int i = 0; i < 3; i++) {
+				for (int j = 0; j < 3; j++) {
+					toCheck.clear();
+					
+					// search within the box
+					for (int row = 0; row < 3; row++) {
+						for (int col = 0; col < 3; col++) {
+							// iterate through array of possibilities for the square				
+							if (possibleMapTable.get((3 * i) + row, (3 * j) + col) != null
+									&& possibleMapTable.get((3 * i) + row, (3 * j) + col).contains(searchedNum)) {
+								// encodes each square in the box with a value
+								// like:
+								//		0 1 2
+								//		3 4 5
+								//		6 7 8
+								// there's probably an easier way
+								toCheck.add((3 * row) + col);
+							}
+						}
+					}
+					
+					if (toCheck.size() == 1) {
+						// decodes the thing from right up there ^^
+						sol[(3 * i) + (toCheck.get(0) % 3)][(3 * j) + (toCheck.get(0) / 3)] = searchedNum;
+						modified = 1;
+						trimPossible((3 * i) + (toCheck.get(0) % 3), (3 * j) + (toCheck.get(0) / 3), searchedNum);
+					}
+				}
+			}
+		}
+		
+		return modified;
 	}
 	
 	// returns non-zero if the val being checked for is already present in the same row, col, or box
@@ -370,19 +521,6 @@ public class Board {
 		return 0;
 	}
 	
-	// just prints the initial board
-	private void printBoard() {
-		for (int i = 0; i < 9; i++) {
-			for (int j = 0; j < 9; j++) {
-				System.out.print(boardStart[i][j] + " ");
-				if (j == 2 || j == 5) System.out.print("| ");
-			}
-			System.out.println();
-			if (i == 2 || i == 5) System.out.println("---------------------");
-		}
-		System.out.println();
-	}
-	
 	// for testing: print the current possibilities for a given cell
 	private void printCellPoss(int row, int col) {
 		System.out.print("Possibilites for Row " + row + ", Column " + col + ": ");
@@ -396,6 +534,19 @@ public class Board {
 		System.out.println();
 	}
 	
+	// just prints the initial board
+	private void printBoard() {
+		for (int i = 0; i < 9; i++) {
+			for (int j = 0; j < 9; j++) {
+				System.out.print(boardStart[i][j] + " ");
+				if (j == 2 || j == 5) System.out.print("| ");
+			}
+			System.out.println();
+			if (i == 2 || i == 5) System.out.println("---------------------");
+		}
+		System.out.println();
+	}
+
 	// prints the working solution as is
 	private void printSol() {
 		for (int i = 0; i < 9; i++) {
