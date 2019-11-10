@@ -41,18 +41,19 @@ public class Board {
 //	board[3][5] = 7;
 //	board[3][7] = 8;
 	
-	// not used yet
-	public int[][] rowOptions = new int[9][9];	
-//	public static Map<Integer, List<Integer>> rowOptions = new HashMap<Integer, List<Integer>>();
-	public int[][] colOptions = new int[9][9];	
-//	public static Map<Integer, List<Integer>> colOptions = new HashMap<Integer, List<Integer>>();
-	public int[][] boxOptions = new int[9][9];
-//	public static Map<Integer, List<Integer>> boxOptions = new HashMap<Integer, List<Integer>>();
+	// not used yet. name self-explanatory. still haven't decided if these are useful
+	// not yet fully maintained through the life-cycle of the program.
+//	public int[][] rowOptions = new int[9][9];	
+	public Map<Integer, List<Integer>> rowOptions = new HashMap<Integer, List<Integer>>();
+//	public int[][] colOptions = new int[9][9];	
+	public Map<Integer, List<Integer>> colOptions = new HashMap<Integer, List<Integer>>();
+//	public int[][] boxOptions = new int[9][9];
+	public Map<Integer, List<Integer>> boxOptions = new HashMap<Integer, List<Integer>>();
 	
 	// working solution
 	public int[][] sol = new int[9][9];
 	// possible candidates for each cell
-	// use google's HashBasedTable to achieve
+	// used google's HashBasedTable to achieve
 	Table<Integer, Integer, List<Integer>> possibleMapTable = HashBasedTable.create();
 	
 	
@@ -74,6 +75,24 @@ public class Board {
 	public Board(String boardData) {
 		
 		boardFile = boardData;
+		
+//		List<Integer> all = new ArrayList<Integer>();
+		List<Integer> all = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9);
+		for (int i = 0; i < 9; i++) {
+			rowOptions.put(i, new ArrayList<Integer>());
+			rowOptions.get(i).addAll(all);
+			colOptions.put(i, new ArrayList<Integer>());
+			colOptions.get(i).addAll(all);
+			boxOptions.put(i, new ArrayList<Integer>());
+			boxOptions.get(i).addAll(all);
+		}
+		
+		try {
+			boardInit();
+		} catch (FileNotFoundException e) {
+			System.out.println("File does not exist?");
+			return;
+		}
 		
 		// working solution
 //		int[][] sol = new int[9][9];
@@ -97,13 +116,13 @@ public class Board {
 		String s = "./src/sudokusolver/sudokuboard.txt";	// project root directory base
 		Board b = new Board(s);
 		
-		try {
-			b.boardInit();
-		}
-		catch (FileNotFoundException e) {
-			System.out.println("File does not exist. Exiting.\n");
-			return;
-		}
+//		try {
+//			b.boardInit();
+//		}
+//		catch (FileNotFoundException e) {
+//			System.out.println("File does not exist. Exiting.\n");
+//			return;
+//		}
 		
 		
 		// print out the starting board
@@ -136,16 +155,21 @@ public class Board {
 		// finally implement x-wing
 		// if one becomes enlightened, one might try "forcing chain" -- see if, for a cell with only two possibilities,
 		// each possibility must lead to a specific result for some other cell
-				
 		
+//		b.printBoard();
 		
+		boolean loopB = true;
 		int loop = 1;
 		while (loop == 1) {
-			loop = b.checkForSoleCandidate();
+//		while (loopB) {
+			// with current game loaded, either of these methods can fully solve the board on their own
+//			loop = b.checkForSoleCandidate();
+			loop = b.checkForUniqueCandidate();
+
 //			System.out.println("\n");
 //			b.printSol();
 		}
-		
+				
 //		b.printSol();
 		System.out.println("Solution is " + (b.checkSol() == 0 ? "correct." : "incorrect or incomplete."));
 		
@@ -176,8 +200,14 @@ public class Board {
 			for (int j = 0; j < 9; j++) {
 				boardStart[i][j] = next;
 				sol[i][j] = next;
+//				possibleMapTable.put(i, j, new ArrayList<Integer>());
 				if (next == 0) {
 					possibleMapTable.put(i, j, new ArrayList<Integer>());
+				} else {
+					rowOptions.get(i).remove(Integer.valueOf(next));
+					colOptions.get(j).remove(Integer.valueOf(next));
+					// figure this out later
+//					boxOptions
 				}
 				if (scanner.hasNextInt()) next = scanner.nextInt();
 			}
@@ -237,6 +267,10 @@ public class Board {
 				}
 			}
 		}
+		if (possibleMapTable.get(row, col) != null) {
+			possibleMapTable.get(row, col).clear();
+			possibleMapTable.remove(row, col);
+		}
 		return 0;
 	}
 	
@@ -259,7 +293,50 @@ public class Board {
 	
 	private int checkForUniqueCandidate() {
 		int modified = 0;
+		
+		if (checkForUniqueCandidateByRowCol() != 0) modified = 1;
+		if (checkForUniqueCandidateByBox() != 0) modified = 1;
+		
 		return modified;
+	}
+	
+	private int checkForUniqueCandidateByRowCol() {
+		int modified = 0;
+		
+		List<Integer> toCheckRow = new ArrayList<Integer>();
+		List<Integer> toCheckCol = new ArrayList<Integer>();
+		
+		for (int searchedNum = 1; searchedNum < 10; searchedNum++) {
+			for (int i = 0; i < 9; i++) {
+				toCheckRow.clear();
+				toCheckCol.clear();
+				for (int j = 0; j < 9; j++) {
+					if (possibleMapTable.get(i, j) != null && possibleMapTable.get(i, j).contains(searchedNum)) {
+						toCheckRow.add(j);
+					}
+					if (possibleMapTable.get(j, i) != null && possibleMapTable.get(j, i).contains(searchedNum)) {
+						toCheckCol.add(j);
+					}
+				}
+				if (toCheckRow.size() == 1) {
+					sol[i][toCheckRow.get(0)] = searchedNum;
+					modified = 1;
+					trimPossible(i, toCheckRow.get(0), searchedNum);
+				}
+				if (toCheckCol.size() == 1) {
+					sol[toCheckCol.get(0)][i] = searchedNum;
+					modified = 1;
+					trimPossible(toCheckCol.get(0), i, searchedNum);
+				}
+			}
+		}
+		
+		return modified;
+	}
+	
+	private int checkForUniqueCandidateByBox() {
+		// TODO implement
+		return 0;
 	}
 	
 	// returns non-zero if the val being checked for is already present in the same row, col, or box
