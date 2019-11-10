@@ -136,7 +136,7 @@ public class Board {
 		
 		
 		// ***** simplify testing new boards *****
-		Board current = b4;
+		Board current = b3;
 //		Board current = new Board(s);
 		
 		
@@ -333,10 +333,11 @@ public class Board {
 			// cycle through the boxes
 			for (int boxRow = 0; boxRow < 3; boxRow++) {
 				for (int boxCol = 0; boxCol < 3; boxCol++) {
-//					if (!boxOptions.get(boxRow * 3 + boxCol).contains(searchedNum)) continue; // TODO
+					// let's not even look in this box if the searchedNum is not an option here
+					// meaning it's already placed somewhere within the box, and no other square will have it as an option
+					if (!boxOptions.get(boxRow * 3 + boxCol).contains(searchedNum)) continue;	 // TODO test
 					toCheck.clear();
 					
-					// TODO could speed up if we used the row/col/boxOptions lists here & test
 					// search within the box
 					for (int row = 0; row < 3; row++) {
 						for (int col = 0; col < 3; col++) {
@@ -369,8 +370,13 @@ public class Board {
 								break;
 							}
 						}
-						// if row is not -1, then all elements are in this block are within the same row
-						if (row != -1) {
+						// if row is not -1, then all potential elements of searchedNum that are in this block 
+						// are also within the same row.
+						// if the other two boxes on the same boxRow already contain a placement of searchedNum,
+						// then we can skip this because it won't do anything. false alarm TODO test
+						if (row != -1
+								&& !boxOptions.get((boxRow * 3) + ((boxCol + 1) % 3)).contains(searchedNum)
+								&& !boxOptions.get((boxRow * 3) + ((boxCol + 2) % 3)).contains(searchedNum)) {
 							for (int i = 0; i < 9; i++) {
 								// don't want to affect any of the items within this box. only outside
 								if (i / 3 == boxCol) continue;
@@ -382,7 +388,11 @@ public class Board {
 							}
 						}
 						// if col is not -1, then all elements are in this block are within the same col
-						if (col != -1) {
+						// if the other two boxes in the same boxCol already contain a placement of searchedNum,
+						// then we can skip this because it won't do anything. false alarm TODO test
+						if (col != -1
+								&& !boxOptions.get((((boxRow + 1) % 3) * 3) + boxCol).contains(searchedNum)
+								&& !boxOptions.get((((boxRow + 2) % 3) * 3) + boxCol).contains(searchedNum)) {
 							for (int i = 0; i < 9; i++) {
 								// don't want to affect any of the items within this box. only outside
 								if (i / 3 == boxRow) continue;
@@ -414,13 +424,18 @@ public class Board {
 			for (int i = 0; i < 9; i++) {
 				toCheckRow.clear();
 				toCheckCol.clear();
-				// TODO row/colOptions would speed this up a lot, also could avoid many of the false positives - the two inline boxes contain the num
-				for (int j = 0; j < 9; j++) {
-					if (possibleMapTable.get(i, j) != null && possibleMapTable.get(i, j).contains(searchedNum)) {
-						toCheckRow.add(j);
+				if (rowOptions.get(i).contains(searchedNum)) { // TODO test
+					for (int j = 0; j < 9; j++) {
+						if (possibleMapTable.get(i, j) != null && possibleMapTable.get(i, j).contains(searchedNum)) {
+							toCheckRow.add(j);
+						}
 					}
-					if (possibleMapTable.get(j, i) != null && possibleMapTable.get(j, i).contains(searchedNum)) {
-						toCheckCol.add(j);
+				}
+				if (colOptions.get(i).contains(searchedNum)) { // TODO test
+					for (int j = 0; j < 9; j++) {
+						if (possibleMapTable.get(j, i) != null && possibleMapTable.get(j, i).contains(searchedNum)) {
+							toCheckCol.add(j);
+						}
 					}
 				}
 				
@@ -434,7 +449,9 @@ public class Board {
 						}
 					}
 					// if block is not -1, then all elements are in the same block, which is stored in block
-					if (block != -1) {
+					if (block != -1
+							&& !boxOptions.get(((i / 3) * 3) + ((block + 1) % 3)).contains(searchedNum)
+							&& !boxOptions.get(((i / 3) * 3) + ((block + 2) % 3)).contains(searchedNum)) { // TODO test
 						for (int _i = 0; _i < 3; _i++) {
 							// i is the row to avoid in this case. i is the row that we are preserving the possible map
 							if (_i == i % 3) continue;
@@ -458,7 +475,9 @@ public class Board {
 						}
 					}
 					// if block is not -1, then all elements are in the same block, which is stored in block
-					if (block != -1) {
+					if (block != -1
+							&& !boxOptions.get((((block + 1) % 3) * 3) + (i / 3)).contains(searchedNum)
+							&& !boxOptions.get((((block + 2) % 3) * 3) + (i / 3)).contains(searchedNum)) { // TODO test
 						for (int _i = 0; _i < 3; _i++) {
 							// i is the col to avoid in this case. i is the col that we are preserving the possible map
 							if (_i == i % 3) continue;
@@ -525,13 +544,18 @@ public class Board {
 			for (int i = 0; i < 9; i++) {
 				toCheckRow.clear();
 				toCheckCol.clear();
-				// TODO could speed this up a lot if we used row/col/boxOptions
-				for (int j = 0; j < 9; j++) {
-					if (possibleMapTable.get(i, j) != null && possibleMapTable.get(i, j).contains(searchedNum)) {
-						toCheckRow.add(j);
+				if (rowOptions.get(i).contains(searchedNum)) { // TODO test
+					for (int j = 0; j < 9; j++) {
+						if (possibleMapTable.get(i, j) != null && possibleMapTable.get(i, j).contains(searchedNum)) {
+							toCheckRow.add(j);
+						}
 					}
-					if (possibleMapTable.get(j, i) != null && possibleMapTable.get(j, i).contains(searchedNum)) {
-						toCheckCol.add(j);
+				}
+				if (colOptions.get(i).contains(searchedNum)) { // TODO test
+					for (int j = 0; j < 9; j++) {
+						if (possibleMapTable.get(j, i) != null && possibleMapTable.get(j, i).contains(searchedNum)) {
+							toCheckCol.add(j);
+						}
 					}
 				}
 				if (toCheckRow.size() == 1) {
@@ -559,9 +583,10 @@ public class Board {
 			// cycle through the boxes
 			for (int boxRow = 0; boxRow < 3; boxRow++) {
 				for (int boxCol = 0; boxCol < 3; boxCol++) {
+					if (!boxOptions.get(boxRow * 3 + boxCol).contains(searchedNum)) continue;	 // TODO test
+
 					toCheck.clear();
 					
-					// TODO could speed up if we used the row/col/boxOptions lists here
 					// search within the box
 					for (int row = 0; row < 3; row++) {
 						for (int col = 0; col < 3; col++) {
