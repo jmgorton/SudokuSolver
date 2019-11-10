@@ -143,21 +143,12 @@ public class Board {
 		
 		
 		// print out the starting board
-//		current.printBoard();
-		// match working solution to initial board state. now handled in boardInit()
-//		current.solInit();
+		current.printBoard();
 		
 		// determine what could possibly be stored in each square
 		// just based on checking row, col, and box
 		// cmd-opt-r to rename all in this block simultaneously in eclipse - be careful
 		current.fillPossible();
-
-		// options seem to be initialized correctly
-//		for (int i = 0; i < 9; i++) {
-//			if (current.rowOptions.get(i) != null) System.out.println("length of row options at " + i + ": " + current.rowOptions.get(i).size());
-//			if (current.colOptions.get(i) != null) System.out.println("length of col options at " + i + ": " + current.colOptions.get(i).size());
-//			if (current.boxOptions.get(i) != null) System.out.println("length of box options at " + i + ": " + current.boxOptions.get(i).size());
-//		}
 		
 //		current.printCellPoss(0, 0);
 //		current.printCellPoss(0, 4);
@@ -214,14 +205,6 @@ public class Board {
 		System.out.println();
 		System.out.println("Solution is " + (current.checkSol() == 0 ? "correct." : "incorrect or incomplete."));
 		
-		// when the puzzle doesn't finish, seems like some of the lengths are off. sign of an issue
-		// the length is never greater than what it should be, always less
-		for (int i = 0; i < 9; i++) {
-			if (current.rowOptions.get(i) != null) System.out.println("length of row options at " + i + ": " + current.rowOptions.get(i).size());
-			if (current.colOptions.get(i) != null) System.out.println("length of col options at " + i + ": " + current.colOptions.get(i).size());
-			if (current.boxOptions.get(i) != null) System.out.println("length of box options at " + i + ": " + current.boxOptions.get(i).size());
-		}
-		
 //		current.printInitandSol();
 		
 	}
@@ -269,6 +252,8 @@ public class Board {
 	
 	// set the working solution, maintain whatever other lists we're working with
 	private void setSolCell(int row, int col, int val) {
+		if (sol[row][col] == val) System.out.println("This could be a problem?");
+//		System.out.println("Row " + row + ", Column " + col + ": should now be " + val);
 		sol[row][col] = val;
 		
 		rowOptions.get(row).remove(Integer.valueOf(val));
@@ -299,9 +284,11 @@ public class Board {
 		return 0;
 	}
 	
-	// likely, the solution has been modified and now we have to update the
+	// the solution has been modified and now we have to update the
 	// possibility array for other boxes. only updates within row, col, or box
 	private int trimPossible(int row, int col, int val) {
+		if (sol[row][col] != val) System.out.println("trimPossible called but sol[][] hasn't been updated. "
+				+ "This would be a problem.");
 		// check row and col
 		// iterate through row/col of the modified square
 		for (int i = 0; i < 9; i++) {
@@ -346,10 +333,10 @@ public class Board {
 			// cycle through the boxes
 			for (int boxRow = 0; boxRow < 3; boxRow++) {
 				for (int boxCol = 0; boxCol < 3; boxCol++) {
-//					if (!boxOptions.get(boxRow * 3 + boxCol).contains(searchedNum)) continue;
+//					if (!boxOptions.get(boxRow * 3 + boxCol).contains(searchedNum)) continue; // TODO
 					toCheck.clear();
 					
-					// TODO could speed up if we used the row/col/boxOptions lists here
+					// TODO could speed up if we used the row/col/boxOptions lists here & test
 					// search within the box
 					for (int row = 0; row < 3; row++) {
 						for (int col = 0; col < 3; col++) {
@@ -517,7 +504,6 @@ public class Board {
 	
 	// look for rows, cols, and boxes in which some number has only a single option for placement
 	// and place it there
-	// this has some bugs, uncovered with board-hard-1
 	private int checkForUniqueCandidate() {
 		int modified = 0;
 		
@@ -549,26 +535,10 @@ public class Board {
 					}
 				}
 				if (toCheckRow.size() == 1) {
-//					sol[i][toCheckRow.get(0)] = searchedNum;
-//					
-//					rowOptions.get(i).remove(Integer.valueOf(searchedNum));
-//					colOptions.get(toCheckRow.get(0)).remove(Integer.valueOf(searchedNum));
-//					boxOptions.get(((i / 3) * 3) + (toCheckRow.get(0) / 3)).remove(Integer.valueOf(searchedNum));
-//					
-//					modified = 1;
-//					trimPossible(i, toCheckRow.get(0), searchedNum);
 					setSolCell(i, toCheckRow.get(0), searchedNum);
 					modified = 1;
 				}
 				if (toCheckCol.size() == 1) {
-//					sol[toCheckCol.get(0)][i] = searchedNum;
-//					
-//					rowOptions.get(toCheckRow.get(0)).remove(Integer.valueOf(searchedNum));
-//					colOptions.get(i).remove(Integer.valueOf(searchedNum));
-//					boxOptions.get(((toCheckRow.get(0) / 3) * 3) + (i / 3)).remove(Integer.valueOf(searchedNum));
-//					
-//					modified = 1;
-//					trimPossible(toCheckCol.get(0), i, searchedNum);
 					setSolCell(toCheckCol.get(0), i, searchedNum);
 					modified = 1;
 				}
@@ -611,15 +581,7 @@ public class Board {
 					
 					if (toCheck.size() == 1) {
 						// decodes the thing from right up there ^^
-//						sol[(3 * boxRow) + (toCheck.get(0) / 3)][(3 * boxCol) + (toCheck.get(0) % 3)] = searchedNum;
-//						
-//						rowOptions.get((3 * boxRow) + (toCheck.get(0) / 3)).remove(Integer.valueOf(searchedNum));
-//						colOptions.get((3 * boxCol) + (toCheck.get(0) % 3)).remove(Integer.valueOf(searchedNum));
-//						boxOptions.get((((3 * boxRow) + (toCheck.get(0) / 3) / 3) * 3) + ((3 * boxCol) + (toCheck.get(0) % 3) / 3)).remove(Integer.valueOf(searchedNum));
-//						
-//						modified = 1;
-//						trimPossible((3 * boxRow) + (toCheck.get(0) / 3), (3 * boxCol) + (toCheck.get(0) % 3), searchedNum);
-						setSolCell((3 * boxRow) + (toCheck.get(0) / 3), (3 * boxCol) + (toCheck.get(0) % 3), searchedNum);
+						setSolCell(((3 * boxRow) + (toCheck.get(0) / 3)), ((3 * boxCol) + (toCheck.get(0) % 3)), searchedNum);
 						modified = 1;
 					}
 				}
@@ -653,7 +615,7 @@ public class Board {
 			for (int j = 0; j < 9; j++) {
 				if (checkVal(i, j, sol[i][j]) != 0) {
 					System.out.println("i: " + i + ", j: " + j + ", val: " + sol[i][j]);
-					printBoard();
+					printSol();
 					return 1;
 				}
 			}
