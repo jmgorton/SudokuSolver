@@ -119,6 +119,10 @@ public class Board {
 		
 		String s2 = "./src/sudokusolver/board-med-1.txt";
 		Board b2 = new Board(s2);
+		
+		// this one introduces a bug!!
+		String s3 = "./src/sudokusolver/board-hard-1.txt";
+		Board b3 = new Board(s3);
 				
 		// print out the starting board
 //		b.printBoard();
@@ -129,6 +133,7 @@ public class Board {
 		// just based on checking row, col, and box
 		b.fillPossible();
 		b2.fillPossible();
+		b3.fillPossible();
 		
 		
 //		b.printCellPoss(0, 0);
@@ -168,16 +173,18 @@ public class Board {
 			while (innerLoop2 == 1) {
 				innerLoop1 = 1;
 				while (innerLoop1 == 1) {
-					innerLoop1 = b2.checkForSoleCandidate();
+//					b3.printSol();
+					innerLoop1 = b3.checkForSoleCandidate();
 					if (innerLoop1 == 1) System.out.println("Added some sole candidates");
 //					System.out.println("Added some sole candidates");
 				}
-				innerLoop2 = b2.checkForUniqueCandidate();
+//				b3.printSol();
+				innerLoop2 = b3.checkForUniqueCandidate();
 				if (innerLoop2 == 1) System.out.println("Added some unique candidates");
 //				System.out.println("Added some unique candidates");
 			}
-			b2.printSol();
-			innerLoop3 = b2.trimPossibleByBlock();
+//			b3.printSol();
+			innerLoop3 = b3.trimPossibleByBlock();
 			if (innerLoop3 == 1) System.out.println("Did some trimming (block)");
 //			System.out.println("Did some trimming (block)");
 		}
@@ -187,7 +194,8 @@ public class Board {
 //		System.out.println();
 		
 //		System.out.println("Solution is " + (b.checkSol() == 0 ? "correct." : "incorrect or incomplete."));
-		System.out.println("Solution is " + (b2.checkSol() == 0 ? "correct." : "incorrect or incomplete."));
+//		System.out.println("Solution is " + (b2.checkSol() == 0 ? "correct." : "incorrect or incomplete."));
+		System.out.println("Solution is " + (b3.checkSol() == 0 ? "correct." : "incorrect or incomplete."));
 		
 //		b.printInitandSol();
 		
@@ -402,11 +410,15 @@ public class Board {
 	
 	// look for rows, cols, and boxes in which some number has only a single option for placement
 	// and place it there
+	// this has some bugs, uncovered with board-hard-1
 	private int checkForUniqueCandidate() {
 		int modified = 0;
 		
-		if (checkForUniqueCandidateByRowCol() != 0) modified = 1;
-		if (checkForUniqueCandidateByBox() != 0) modified = 1;
+		printSol();
+		if (checkForUniqueCandidateByRowCol() != 0) modified = 1; // after this stage, it is correct, but how?
+		printSol();
+		if (checkForUniqueCandidateByBox() != 0) modified = 1; // after this stage, it is incorrect
+		printSol();
 		
 		return modified;
 	}
