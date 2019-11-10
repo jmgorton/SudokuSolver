@@ -122,6 +122,9 @@ public class Board {
 		
 		String s3 = "./src/sudokusolver/board-hard-1.txt";
 		Board b3 = new Board(s3);
+		
+		String s4 = "./src/sudokusolver/board-evil-1.txt";
+		Board b4 = new Board(s4);
 				
 		// print out the starting board
 //		b.printBoard();
@@ -130,9 +133,11 @@ public class Board {
 		
 		// determine what could possibly be stored in each square
 		// just based on checking row, col, and box
+		// cmd-opt-r to rename all in this block simultaneously in eclipse - be careful
 		b.fillPossible();
 		b2.fillPossible();
 		b3.fillPossible();
+		b4.fillPossible();
 		
 		
 //		b.printCellPoss(0, 0);
@@ -156,7 +161,7 @@ public class Board {
 		// if one becomes enlightened, one might try "forcing chain" -- see if, for a cell with only two possibilities,
 		// each possibility must lead to a specific result for some other cell
 		
-//		b.printBoard();
+//		b4.printBoard();
 		
 		boolean loopB = true;		
 		// board b can be fully solved by either method alone
@@ -167,34 +172,34 @@ public class Board {
 		int[] loop = new int[3];
 		
 		innerLoop3 = 1;
-		while (innerLoop3 == 1) {
+		while (innerLoop3 != 0) {
 			innerLoop2 = 1;
-			while (innerLoop2 == 1) {
+			while (innerLoop2 != 0) {
 				innerLoop1 = 1;
-				while (innerLoop1 == 1) {
+				while (innerLoop1 != 0) {
 //					b3.printSol();
-					innerLoop1 = b3.checkForSoleCandidate();
-					if (innerLoop1 == 1) System.out.println("Added some sole candidates");
+					innerLoop1 = b4.checkForSoleCandidate();
+					if (innerLoop1 != 0) System.out.println("Added some sole candidates");
 //					System.out.println("Added some sole candidates");
 				}
 //				b3.printSol();
-				innerLoop2 = b3.checkForUniqueCandidate();
-				if (innerLoop2 == 1) System.out.println("Added some unique candidates");
+				innerLoop2 = b4.checkForUniqueCandidate();
+				if (innerLoop2 != 0) System.out.println("Added some unique candidates");
 //				System.out.println("Added some unique candidates");
 			}
-//			b3.printSol();
-			innerLoop3 = b3.trimPossibleByBlock();
-			if (innerLoop3 == 1) System.out.println("Did some trimming (block)");
+//			b4.printSol();
+			innerLoop3 = b4.trimPossibleByBlock();
+			if (innerLoop3 != 0) System.out.println("Did some trimming (block)");
 //			System.out.println("Did some trimming (block)");
 		}
 		
 		// CHECK SOLUTIONS
 //		b.printSol();
-//		System.out.println();
+		System.out.println();
 		
 //		System.out.println("Solution is " + (b.checkSol() == 0 ? "correct." : "incorrect or incomplete."));
 //		System.out.println("Solution is " + (b2.checkSol() == 0 ? "correct." : "incorrect or incomplete."));
-		System.out.println("Solution is " + (b3.checkSol() == 0 ? "correct." : "incorrect or incomplete."));
+		System.out.println("Solution is " + (b4.checkSol() == 0 ? "correct." : "incorrect or incomplete."));
 		
 //		b.printInitandSol();
 		
@@ -300,7 +305,7 @@ public class Board {
 		int modified = 0;
 		
 		if (trimPossibleByBlockPositive() != 0) modified = 1;
-		if (trimPossibleByBlockNegative() != 0) modified = 1;
+		if (trimPossibleByBlockNegative() != 0) modified = 2;
 		
 		return modified;
 	}
@@ -311,7 +316,7 @@ public class Board {
 	private int trimPossibleByBlockPositive() {
 		int modified = 0;
 		
-		
+		// TODO
 		
 		return modified;
 	}
@@ -329,6 +334,7 @@ public class Board {
 			for (int i = 0; i < 9; i++) {
 				toCheckRow.clear();
 				toCheckCol.clear();
+				// TODO row/colOptions would speed this up a lot, also could avoid many of the false positives - the two inline boxes contain the num
 				for (int j = 0; j < 9; j++) {
 					if (possibleMapTable.get(i, j) != null && possibleMapTable.get(i, j).contains(searchedNum)) {
 						toCheckRow.add(j);
@@ -348,14 +354,15 @@ public class Board {
 						}
 					}
 					// if block is not -1, then all elements are in the same block, which is stored in block
-					if (block != 1) {
+					if (block != -1) {
 						for (int _i = 0; _i < 3; _i++) {
 							// i is the row to avoid in this case. i is the row that we are preserving the possible map
 							if (_i == i % 3) continue;
 							for (int _j = 0; _j < 3; _j++) {
 								if (possibleMapTable.get(((i / 3) * 3) + _i, (block * 3) + _j) != null 
 										&& possibleMapTable.get(((i / 3) * 3) + _i, (block * 3) + _j).contains(searchedNum)) {
-									possibleMapTable.get(((i / 3) * 3) + _i, (block * 3) + _j).remove(searchedNum);
+									possibleMapTable.get(((i / 3) * 3) + _i, (block * 3) + _j).remove(Integer.valueOf(searchedNum));
+									modified = 1;
 								}
 							}
 						}
@@ -371,14 +378,15 @@ public class Board {
 						}
 					}
 					// if block is not -1, then all elements are in the same block, which is stored in block
-					if (block != 1) {
+					if (block != -1) {
 						for (int _i = 0; _i < 3; _i++) {
 							// i is the col to avoid in this case. i is the col that we are preserving the possible map
 							if (_i == i % 3) continue;
 							for (int _j = 0; _j < 3; _j++) {
 								if (possibleMapTable.get((block * 3) + _j, ((i / 3) * 3) + _i) != null 
 										&& possibleMapTable.get((block * 3) + _j, ((i / 3) * 3) + _i).contains(searchedNum)) {
-									possibleMapTable.get((block * 3) + _j, ((i / 3) * 3) + _i).remove(searchedNum);
+									possibleMapTable.get((block * 3) + _j, ((i / 3) * 3) + _i).remove(Integer.valueOf(searchedNum));
+									modified = 1;
 								}
 							}
 						}
@@ -414,7 +422,7 @@ public class Board {
 		int modified = 0;
 		
 		if (checkForUniqueCandidateByRowCol() != 0) modified = 1;
-		if (checkForUniqueCandidateByBox() != 0) modified = 1; // after this stage, it is incorrect
+		if (checkForUniqueCandidateByBox() != 0) modified = 2;
 		
 		return modified;
 	}
@@ -523,6 +531,7 @@ public class Board {
 			for (int j = 0; j < 9; j++) {
 				if (checkVal(i, j, sol[i][j]) != 0) {
 					System.out.println("i: " + i + ", j: " + j + ", val: " + sol[i][j]);
+					printBoard();
 					return 1;
 				}
 			}
