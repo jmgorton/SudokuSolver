@@ -136,7 +136,7 @@ public class Board {
 		
 		
 		// ***** simplify testing new boards *****
-		Board current = b3;
+		Board current = b4;
 //		Board current = new Board(s);
 		
 		
@@ -187,15 +187,15 @@ public class Board {
 			while (innerLoop2 != 0) {
 				innerLoop1 = 1;
 				while (innerLoop1 != 0) {
-//					current.printSol();
+					current.printSol();
 					innerLoop1 = current.checkForSoleCandidate();
 					if (innerLoop1 != 0) System.out.println("Added some sole candidates");
 				}
-//				current.printSol();
+				current.printSol();
 				innerLoop2 = current.checkForUniqueCandidate();
 				if (innerLoop2 != 0) System.out.println("Added some unique candidates");
 			}
-//			current.printSol();
+			current.printSol();
 			innerLoop3 = current.trimPossibleByBlock();
 			if (innerLoop3 != 0) System.out.println("Did some trimming (block)");
 		}
@@ -312,6 +312,71 @@ public class Board {
 		return 0;
 	}
 
+	private int trimPossibleBySubset() {
+		int modified = 0;
+		
+		if (trimPossibleBySubsetNaked() != 0) modified = 1;
+		if (trimPossibleBySubsetHidden() != 0) modified = 2;
+		
+		return modified;
+	}
+	
+	
+	private int trimPossibleBySubsetNaked() {
+		int modified = 0;
+		
+		if (trimPossibleBySubsetNakedWithinBox() != 0) modified = 1;
+		if (trimPossibleBySubsetNakedWithinRowCol() != 0) modified = 2;
+		
+		return modified;
+	}
+	
+	private int trimPossibleBySubsetNakedWithinBox() {
+		int modified = 0;
+		
+		
+		
+		return modified;
+	}
+	
+	private int trimPossibleBySubsetNakedWithinRowCol() {
+		int modified = 0;
+		
+		List<Integer> rowPairs = new ArrayList<Integer>();
+		List<Integer> colPairs = new ArrayList<Integer>();
+		// start with implementing pairs of 2, then generalize ?
+		for (int i = 0; i < 9; i++) {
+			rowPairs.clear();
+			colPairs.clear();
+			for (int j = 0; j < 9; j++) {
+				
+			}
+		}
+		
+		return modified;
+	}
+	
+	private int trimPossibleBySubsetHidden() {
+		int modified = 0;
+		
+		if (trimPossibleBySubsetHiddenWithinBox() != 0) modified = 1;
+		if (trimPossibleBySubsetHiddenWithinRowCol() != 0) modified = 2;
+		
+		return modified;
+	}
+	
+	private int trimPossibleBySubsetHiddenWithinBox() {
+		int modified = 0;
+		
+		return modified;
+	}
+	
+	private int trimPossibleBySubsetHiddenWithinRowCol() {
+		int modified = 0;
+		
+		return modified;
+	}
+	
 	private int trimPossibleByBlock() {
 		int modified = 0;
 		
@@ -335,7 +400,7 @@ public class Board {
 				for (int boxCol = 0; boxCol < 3; boxCol++) {
 					// let's not even look in this box if the searchedNum is not an option here
 					// meaning it's already placed somewhere within the box, and no other square will have it as an option
-					if (!boxOptions.get(boxRow * 3 + boxCol).contains(searchedNum)) continue;	 // TODO test
+					if (!boxOptions.get(boxRow * 3 + boxCol).contains(searchedNum)) continue;
 					toCheck.clear();
 					
 					// search within the box
@@ -373,10 +438,10 @@ public class Board {
 						// if row is not -1, then all potential elements of searchedNum that are in this block 
 						// are also within the same row.
 						// if the other two boxes on the same boxRow already contain a placement of searchedNum,
-						// then we can skip this because it won't do anything. false alarm TODO test
+						// then we can skip this because it won't do anything. false alarm
 						if (row != -1
-								&& !boxOptions.get((boxRow * 3) + ((boxCol + 1) % 3)).contains(searchedNum)
-								&& !boxOptions.get((boxRow * 3) + ((boxCol + 2) % 3)).contains(searchedNum)) {
+								&& (boxOptions.get((boxRow * 3) + ((boxCol + 1) % 3)).contains(searchedNum)
+								|| boxOptions.get((boxRow * 3) + ((boxCol + 2) % 3)).contains(searchedNum))) {
 							for (int i = 0; i < 9; i++) {
 								// don't want to affect any of the items within this box. only outside
 								if (i / 3 == boxCol) continue;
@@ -389,10 +454,10 @@ public class Board {
 						}
 						// if col is not -1, then all elements are in this block are within the same col
 						// if the other two boxes in the same boxCol already contain a placement of searchedNum,
-						// then we can skip this because it won't do anything. false alarm TODO test
+						// then we can skip this because it won't do anything. false alarm
 						if (col != -1
-								&& !boxOptions.get((((boxRow + 1) % 3) * 3) + boxCol).contains(searchedNum)
-								&& !boxOptions.get((((boxRow + 2) % 3) * 3) + boxCol).contains(searchedNum)) {
+								&& (boxOptions.get((((boxRow + 1) % 3) * 3) + boxCol).contains(searchedNum)
+								|| boxOptions.get((((boxRow + 2) % 3) * 3) + boxCol).contains(searchedNum))) {
 							for (int i = 0; i < 9; i++) {
 								// don't want to affect any of the items within this box. only outside
 								if (i / 3 == boxRow) continue;
@@ -424,14 +489,14 @@ public class Board {
 			for (int i = 0; i < 9; i++) {
 				toCheckRow.clear();
 				toCheckCol.clear();
-				if (rowOptions.get(i).contains(searchedNum)) { // TODO test
+				if (rowOptions.get(i).contains(searchedNum)) {
 					for (int j = 0; j < 9; j++) {
 						if (possibleMapTable.get(i, j) != null && possibleMapTable.get(i, j).contains(searchedNum)) {
 							toCheckRow.add(j);
 						}
 					}
 				}
-				if (colOptions.get(i).contains(searchedNum)) { // TODO test
+				if (colOptions.get(i).contains(searchedNum)) {
 					for (int j = 0; j < 9; j++) {
 						if (possibleMapTable.get(j, i) != null && possibleMapTable.get(j, i).contains(searchedNum)) {
 							toCheckCol.add(j);
@@ -439,6 +504,7 @@ public class Board {
 					}
 				}
 				
+				// TODO ? could speed up more by calculating toCheckRowBlock and toCheckColBlock during the add step
 				if (!toCheckRow.isEmpty()) {
 					// block will be 0, 1, or 2. it will help us remember which block the element elt is in
 					int block = toCheckRow.get(0) / 3;
@@ -450,8 +516,8 @@ public class Board {
 					}
 					// if block is not -1, then all elements are in the same block, which is stored in block
 					if (block != -1
-							&& !boxOptions.get(((i / 3) * 3) + ((block + 1) % 3)).contains(searchedNum)
-							&& !boxOptions.get(((i / 3) * 3) + ((block + 2) % 3)).contains(searchedNum)) { // TODO test
+							&& (boxOptions.get(((i / 3) * 3) + ((block + 1) % 3)).contains(searchedNum)
+							|| boxOptions.get(((i / 3) * 3) + ((block + 2) % 3)).contains(searchedNum))) {
 						for (int _i = 0; _i < 3; _i++) {
 							// i is the row to avoid in this case. i is the row that we are preserving the possible map
 							if (_i == i % 3) continue;
@@ -476,8 +542,8 @@ public class Board {
 					}
 					// if block is not -1, then all elements are in the same block, which is stored in block
 					if (block != -1
-							&& !boxOptions.get((((block + 1) % 3) * 3) + (i / 3)).contains(searchedNum)
-							&& !boxOptions.get((((block + 2) % 3) * 3) + (i / 3)).contains(searchedNum)) { // TODO test
+							&& (boxOptions.get((((block + 1) % 3) * 3) + (i / 3)).contains(searchedNum)
+							|| boxOptions.get((((block + 2) % 3) * 3) + (i / 3)).contains(searchedNum))) {
 						for (int _i = 0; _i < 3; _i++) {
 							// i is the col to avoid in this case. i is the col that we are preserving the possible map
 							if (_i == i % 3) continue;
@@ -544,20 +610,21 @@ public class Board {
 			for (int i = 0; i < 9; i++) {
 				toCheckRow.clear();
 				toCheckCol.clear();
-				if (rowOptions.get(i).contains(searchedNum)) { // TODO test
+				if (rowOptions.get(i).contains(searchedNum)) {
 					for (int j = 0; j < 9; j++) {
 						if (possibleMapTable.get(i, j) != null && possibleMapTable.get(i, j).contains(searchedNum)) {
 							toCheckRow.add(j);
 						}
 					}
 				}
-				if (colOptions.get(i).contains(searchedNum)) { // TODO test
+				if (colOptions.get(i).contains(searchedNum)) {
 					for (int j = 0; j < 9; j++) {
 						if (possibleMapTable.get(j, i) != null && possibleMapTable.get(j, i).contains(searchedNum)) {
 							toCheckCol.add(j);
 						}
 					}
 				}
+				// TODO ? could speed this up even more if we also did the trimming search here i think
 				if (toCheckRow.size() == 1) {
 					setSolCell(i, toCheckRow.get(0), searchedNum);
 					modified = 1;
@@ -583,7 +650,7 @@ public class Board {
 			// cycle through the boxes
 			for (int boxRow = 0; boxRow < 3; boxRow++) {
 				for (int boxCol = 0; boxCol < 3; boxCol++) {
-					if (!boxOptions.get(boxRow * 3 + boxCol).contains(searchedNum)) continue;	 // TODO test
+					if (!boxOptions.get(boxRow * 3 + boxCol).contains(searchedNum)) continue;
 
 					toCheck.clear();
 					
@@ -604,7 +671,7 @@ public class Board {
 						}
 					}
 					
-					if (toCheck.size() == 1) {
+					if (toCheck.size() == 1) { // TODO ? could also speed up if we did the trim check here
 						// decodes the thing from right up there ^^
 						setSolCell(((3 * boxRow) + (toCheck.get(0) / 3)), ((3 * boxCol) + (toCheck.get(0) % 3)), searchedNum);
 						modified = 1;
