@@ -42,17 +42,14 @@ public class Board {
 //	board[3][5] = 7;
 //	board[3][7] = 8;
 	
-	// not used yet. name self-explanatory
-//	public int[][] rowOptions = new int[9][9];	
+	// name self-explanatory
 	public Map<Integer, List<Integer>> rowOptions = new HashMap<Integer, List<Integer>>();
-//	public int[][] colOptions = new int[9][9];	
 	public Map<Integer, List<Integer>> colOptions = new HashMap<Integer, List<Integer>>();
 	// boxes are arranged like:
 	//		1 2 3
 	//		4 5 6
 	//		7 8 9
 	// like reading a book
-//	public int[][] boxOptions = new int[9][9];
 	public Map<Integer, List<Integer>> boxOptions = new HashMap<Integer, List<Integer>>();
 	
 	// working solution
@@ -64,7 +61,11 @@ public class Board {
 	
 	
 	// list of coordinates of existing locations for each number
-	// not used yet
+	// not used yet. if you wanted to use this, probably better to use HashBasedTable again like possibleMapTable
+	// maybe not actually? cause the key is only an integer
+	// actually maybe something like:
+	// public Map<Integer, Map<Integer, List<Integer>>> coords;
+	// to be able to get coords by row or col or whatever - one or the other but not both?
 	public Map<Integer, List<Tuple<Integer, Integer>>> coords = 
 			new HashMap<Integer, List<Tuple<Integer, Integer>>>();
 	// list of available coordinates??? also not used
@@ -81,7 +82,6 @@ public class Board {
 		
 		boardFile = boardData;
 		
-//		List<Integer> all = new ArrayList<Integer>();
 		List<Integer> all = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9);
 		for (int i = 0; i < 9; i++) {
 			rowOptions.put(i, new ArrayList<Integer>());
@@ -117,19 +117,18 @@ public class Board {
 	
 	// instead of try-catch, could just throw FNF exception here?
 	public static void main(String[] args) {
-//		String s = "Users/jaredgorton/eclipse-workspace/SudokuSolver/src/sudokusolver/sudokuboard.txt";
-		String s = "./src/sudokusolver/board-easy-1.txt";	// project root directory base
+		String s = "./boards/board-easy-1.txt";
 		Board b = new Board(s);
 		
-		String s2 = "./src/sudokusolver/board-med-1.txt";
+		String s2 = "./boards/board-med-1.txt";
 		Board b2 = new Board(s2);
 		
-		String s3 = "./src/sudokusolver/board-hard-1.txt";
+		String s3 = "./boards/board-hard-1.txt";
 		Board b3 = new Board(s3);
 		
 		// on this board, after the first trimPossibleByBlock -- at least before Positive was implemented --
 		// we get a hidden pair of 6/7 in row 3 cols 7 & 8. investigate, use for testing
-		String s4 = "./src/sudokusolver/board-evil-1.txt";
+		String s4 = "./boards/board-evil-1.txt";
 		Board b4 = new Board(s4);
 
 		
@@ -345,11 +344,17 @@ public class Board {
 		List<Integer> rowPairs = new ArrayList<Integer>();
 		List<Integer> colPairs = new ArrayList<Integer>();
 		// start with implementing pairs of 2, then generalize ?
+		// the semi-tricky thing is: squares with subsets of the subset count too
+		// i.e. three squares with [5, 7], [5, 7, 8], [5, 8] as options count as a triple
+		// and the options 5, 7, and 8 should be removed from other squares
 		for (int i = 0; i < 9; i++) {
 			rowPairs.clear();
 			colPairs.clear();
 			for (int j = 0; j < 9; j++) {
-				
+				// what's an efficient way to do this
+				if (possibleMapTable.get(i, j) != null) {
+					
+				}
 			}
 		}
 		
