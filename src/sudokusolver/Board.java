@@ -584,23 +584,100 @@ public class Board {
 	private int trimPossibleBySubsetHiddenWithinRowCol() {
 		int modified = 0;
 		
-		List<Integer> rowPairs = new ArrayList<Integer>();
-		List<Integer> colPairs = new ArrayList<Integer>();
-		Map<Integer, List<Integer>> optionLocations = new HashMap<Integer, List<Integer>>();
+		// TODO test
+		
+		Set<Integer> rowMatches = new HashSet<Integer>();
+		Set<Integer> colMatches = new HashSet<Integer>();
+//		Map<Integer, List<Integer>> optionLocations = new HashMap<Integer, List<Integer>>();
+		Set<Integer> locations = new HashSet<Integer>();
+		
+		// the union of the sets of the pair/triple/etc options should have the same cardinality as there are squares
+		// making up the pair/triple/etc. i.e. if there are 3 options that must go in 3 squares, then they must be
+		// values for those squares and any other options can be removed. regardless of if the options are like
+		// [1, 2], [2, 5], [1, 5] or if they're like [1, 2, 5], [1, 2, 5], [1, 2, 5] or something else
 		
 		for (int i = 0; i < 9; i++) {
-			for (int j = 0; j < 9; j++) {
-//				if (trimPossibleBySubsetHiddenWithinRowCol(i, j, true) != 0) modified = 1;
-//				if (trimPossibleBySubsetHiddenWithinRowCol(j, i, false) != 0) modified = 2;
-				
-				rowPairs.clear();
-				colPairs.clear();
-				
-//				if (possibleBySquare.get(i, j) != null) {
-//
+//			for (int j = 0; j < 9; j++) {
+////				if (trimPossibleBySubsetHiddenWithinRowCol(i, j, true) != 0) modified = 1;
+////				if (trimPossibleBySubsetHiddenWithinRowCol(j, i, false) != 0) modified = 2;
+//				
+//				rowPairs.clear();
+//				colPairs.clear();
+//				
+////				if (possibleBySquare.get(i, j) != null) {
+////
+////				}
+//				for (Integer opt : rowOptions.get(i)) {
+//					
 //				}
-				for (Integer opt : rowOptions.get(i)) {
-					
+//			}
+			
+//			for (Integer valueOption : rowOptions.get(i)) {
+//				locations = possibleCoordsByRow.get(valueOption).get(i);
+//				if (locations.size() == rowOptions.get(i).size()) continue;
+//			}
+			
+			// don't focus on subsets yet, just perfect matches
+			// start cycling through the options remaining in this row
+			for (Integer startOption : rowOptions.get(i)) {
+				rowMatches.clear();
+				
+				// get the possible locations of the element we're trying to find location matches for
+				locations = possibleCoordsByRow.get(startOption).get(i);
+				rowMatches.add(startOption);
+				
+				for (Integer matchOption : rowOptions.get(i)) {
+					if (matchOption == startOption) continue;
+					if (possibleCoordsByRow.get(matchOption).get(i).equals(locations)) {
+						rowMatches.add(matchOption);
+					}
+				}
+				
+				if (locations.size() == rowMatches.size()) {
+					// we've found a pair/triplet/etc
+					for (Integer location : locations) {
+//						possibleBySquare.get(i, location).removeIf(n -> !rowMatches.contains(n));
+						for (Integer toCheckForRemoval : possibleBySquare.get(i, location)) {
+							if (!rowMatches.contains(toCheckForRemoval)) {
+								modified = 1;
+								possibleBySquare.get(i, location).remove(toCheckForRemoval);
+								possibleCoordsByRow.get(toCheckForRemoval).get(i).remove(location);
+								possibleCoordsByCol.get(toCheckForRemoval).get(location).remove(i);
+							}
+						}
+					}
+				}
+			}
+			
+			// don't focus on subsets yet, just perfect matches
+			// start cycling through the options remaining in this col
+			for (Integer startOption : colOptions.get(i)) {
+				colMatches.clear();
+				
+				// get the possible locations of the element we're trying to find location matches for
+				locations = possibleCoordsByCol.get(startOption).get(i);
+				colMatches.add(startOption);
+				
+				for (Integer matchOption : colOptions.get(i)) {
+					if (matchOption == startOption) continue;
+					if (possibleCoordsByCol.get(matchOption).get(i).equals(locations)) {
+						colMatches.add(matchOption);
+					}
+				}
+				
+				if (locations.size() == colMatches.size()) {
+					// we've found a pair/triplet/etc
+					for (Integer location : locations) {
+//									possibleBySquare.get(i, location).removeIf(n -> !rowMatches.contains(n));
+						for (Integer toCheckForRemoval : possibleBySquare.get(location, i)) {
+							if (!colMatches.contains(toCheckForRemoval)) {
+								modified = 1;
+								possibleBySquare.get(location, i).remove(toCheckForRemoval);
+								possibleCoordsByRow.get(toCheckForRemoval).get(location).remove(i);
+								possibleCoordsByCol.get(toCheckForRemoval).get(i).remove(location);
+							}
+						}
+					}
 				}
 			}
 		}
