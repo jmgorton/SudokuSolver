@@ -60,8 +60,6 @@ public class Board {
 	Table<Integer, Integer, Set<Integer>> possibleBySquare = HashBasedTable.create();
 	
 	// list of available locations to place a number
-	// this map would be pretty big, but pretty useful
-	// TODO i think these are fully maintained now, but we need to test
 	// numberToPlace -> rowToPlaceNumber -> (List) columnsAvailableForNumber
 	public Map<Integer, Map<Integer, Set<Integer>>> possibleCoordsByRow = 
 			new HashMap<Integer, Map<Integer, Set<Integer>>>();
@@ -137,11 +135,6 @@ public class Board {
 		
 		// print out the starting board
 		current.printBoard();
-		
-		// determine what could possibly be stored in each square
-		// just based on checking row, col, and box
-		// cmd-opt-r to rename all in this block simultaneously in eclipse - be careful
-//		current.fillPossible();
 		
 //		current.printCellPoss(0, 0);
 //		current.printCellPoss(0, 4);
@@ -229,35 +222,11 @@ public class Board {
 		for (int i = 0; i < 9; i++) {
 			for (int j = 0; j < 9; j++) {
 				boardStart[i][j] = next;
-//				sol[i][j] = next;
 
 				if (next == 0) {
-//					possibleBySquare.put(i, j, new HashSet<Integer>());
 					sol[i][j] = next;
 				} else {
 					setSolCell(i, j, next);
-//					rowOptions.get(i).remove(Integer.valueOf(next));
-//					colOptions.get(j).remove(Integer.valueOf(next));
-//
-//					int row = i / 3;
-//					int col = j / 3;
-//					boxOptions.get((row * 3) + col).remove(Integer.valueOf(next));
-//					
-//					possibleCoordsByRow.get(next).get(i).clear();
-//					possibleCoordsByRow.get(next).remove(Integer.valueOf(i));
-//					if (possibleCoordsByRow.get(next).size() == 0) {
-//						possibleCoordsByRow.remove(Integer.valueOf(next));
-//					}
-//					possibleCoordsByCol.get(next).get(j).clear();
-//					possibleCoordsByCol.get(next).remove(Integer.valueOf(j));
-//					if (possibleCoordsByCol.get(next).size() == 0) {
-//						possibleCoordsByCol.remove(Integer.valueOf(next));
-//					}
-//					for (int otherNums = 1; otherNums < 10; otherNums++) {
-//						if (otherNums == next) continue;
-//						possibleCoordsByRow.get(otherNums).get(i).remove(j);
-//						possibleCoordsByCol.get(otherNums).get(j).remove(i);
-//					}
 				}
 				
 				// we're pretty much assuming the file is formatted correctly
@@ -284,28 +253,6 @@ public class Board {
 		boxOptions.get(((row / 3) * 3) + (col / 3)).remove(Integer.valueOf(val));
 		
 		trimPossibleAfterEntry(row, col, val);
-	}
-		
-	// determine what could possibly be stored in each square
-	// just based on checking row, col, and box
-	// shoulda done this in boardInit() as well
-	private int fillPossible() {
-		// cycle through squares on the board
-		for (int i = 0; i < 9; i++) {
-			for (int j = 0; j < 9; j++) {
-				// skip the square if the value has already been correctly set
-				if (boardStart[i][j] != 0 || possibleBySquare.get(i, j) == null) continue;
-				
-				// populate what the square could possibly hold
-				// simply based on checking row, col, and box
-				for (int k = 1; k < 10; k++) {
-					if(checkVal(i, j, k) == 0) {
-						possibleBySquare.get(i, j).add(k);
-					}
-				}
-			}
-		}
-		return 0;
 	}
 	
 	// remove a single option from the possible lists/sets we are maintaining
@@ -375,11 +322,17 @@ public class Board {
 			possibleCoordsByCol.remove(Integer.valueOf(val));
 		}
 		for (int i = 1; i < 10; i++) {
-			if (possibleCoordsByRow.get(val) != null && possibleCoordsByRow.get(val).get(i - 1) != null) {
-				possibleCoordsByRow.get(val).get(i - 1).remove(col);
+			if (possibleCoordsByRow.get(val) != null) {
+				if (possibleCoordsByRow.get(val).get(i - 1) != null)
+					possibleCoordsByRow.get(val).get(i - 1).remove(col);
+				if (possibleCoordsByRow.get(val).get((row / 3) * 3 + (i - 1) / 3) != null)
+					possibleCoordsByRow.get(val).get((row / 3) * 3 + (i - 1) / 3).remove((col / 3) * 3 + (i - 1) % 3);
 			}
-			if (possibleCoordsByCol.get(val) != null && possibleCoordsByCol.get(val).get(i - 1) != null) {
-				possibleCoordsByCol.get(val).get(i - 1).remove(row);
+			if (possibleCoordsByCol.get(val) != null) {
+				if (possibleCoordsByCol.get(val).get(i - 1) != null)
+					possibleCoordsByCol.get(val).get(i - 1).remove(row);
+				if (possibleCoordsByCol.get(val).get((col / 3) * 3 + (i - 1) % 3) != null)
+					possibleCoordsByCol.get(val).get((col / 3) * 3 + (i - 1) % 3).remove((row / 3) * 3 + (i - 1) / 3);
 			}
 			if (i == val) continue;
 			if (possibleCoordsByRow.get(i) != null && possibleCoordsByRow.get(i).get(row) != null) {
