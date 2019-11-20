@@ -95,6 +95,9 @@ public class Board {
 				possibleCoordsByRow.get(i + 1).get(j).addAll(allFromZero);
 				possibleCoordsByCol.get(i + 1).put(j, new HashSet<Integer>());
 				possibleCoordsByCol.get(i + 1).get(j).addAll(allFromZero);
+				
+				possibleBySquare.put(i, j, new HashSet<Integer>());
+				possibleBySquare.get(i, j).addAll(all);
 			}
 		}
 		
@@ -138,7 +141,7 @@ public class Board {
 		// determine what could possibly be stored in each square
 		// just based on checking row, col, and box
 		// cmd-opt-r to rename all in this block simultaneously in eclipse - be careful
-		current.fillPossible();
+//		current.fillPossible();
 		
 //		current.printCellPoss(0, 0);
 //		current.printCellPoss(0, 4);
@@ -226,28 +229,35 @@ public class Board {
 		for (int i = 0; i < 9; i++) {
 			for (int j = 0; j < 9; j++) {
 				boardStart[i][j] = next;
-				sol[i][j] = next;
+//				sol[i][j] = next;
 
 				if (next == 0) {
-					possibleBySquare.put(i, j, new HashSet<Integer>());
+//					possibleBySquare.put(i, j, new HashSet<Integer>());
+					sol[i][j] = next;
 				} else {
-					rowOptions.get(i).remove(Integer.valueOf(next));
-					colOptions.get(j).remove(Integer.valueOf(next));
-
-					int row = i / 3;
-					int col = j / 3;
-					boxOptions.get((row * 3) + col).remove(Integer.valueOf(next));
-					
-					possibleCoordsByRow.get(next).get(i).clear();
-					possibleCoordsByRow.get(next).remove(Integer.valueOf(i));
-					if (possibleCoordsByRow.get(next).size() == 0) {
-						possibleCoordsByRow.remove(Integer.valueOf(next));
-					}
-					possibleCoordsByCol.get(next).get(j).clear();
-					possibleCoordsByCol.get(next).remove(Integer.valueOf(j));
-					if (possibleCoordsByCol.get(next).size() == 0) {
-						possibleCoordsByCol.remove(Integer.valueOf(next));
-					}
+					setSolCell(i, j, next);
+//					rowOptions.get(i).remove(Integer.valueOf(next));
+//					colOptions.get(j).remove(Integer.valueOf(next));
+//
+//					int row = i / 3;
+//					int col = j / 3;
+//					boxOptions.get((row * 3) + col).remove(Integer.valueOf(next));
+//					
+//					possibleCoordsByRow.get(next).get(i).clear();
+//					possibleCoordsByRow.get(next).remove(Integer.valueOf(i));
+//					if (possibleCoordsByRow.get(next).size() == 0) {
+//						possibleCoordsByRow.remove(Integer.valueOf(next));
+//					}
+//					possibleCoordsByCol.get(next).get(j).clear();
+//					possibleCoordsByCol.get(next).remove(Integer.valueOf(j));
+//					if (possibleCoordsByCol.get(next).size() == 0) {
+//						possibleCoordsByCol.remove(Integer.valueOf(next));
+//					}
+//					for (int otherNums = 1; otherNums < 10; otherNums++) {
+//						if (otherNums == next) continue;
+//						possibleCoordsByRow.get(otherNums).get(i).remove(j);
+//						possibleCoordsByCol.get(otherNums).get(j).remove(i);
+//					}
 				}
 				
 				// we're pretty much assuming the file is formatted correctly
@@ -364,12 +374,26 @@ public class Board {
 		if (possibleCoordsByCol.get(val).size() == 0) {
 			possibleCoordsByCol.remove(Integer.valueOf(val));
 		}
+		for (int i = 1; i < 10; i++) {
+			if (possibleCoordsByRow.get(val) != null && possibleCoordsByRow.get(val).get(i - 1) != null) {
+				possibleCoordsByRow.get(val).get(i - 1).remove(col);
+			}
+			if (possibleCoordsByCol.get(val) != null && possibleCoordsByCol.get(val).get(i - 1) != null) {
+				possibleCoordsByCol.get(val).get(i - 1).remove(row);
+			}
+			if (i == val) continue;
+			if (possibleCoordsByRow.get(i) != null && possibleCoordsByRow.get(i).get(row) != null) {
+				possibleCoordsByRow.get(i).get(row).remove(col);
+			}
+			if (possibleCoordsByCol.get(i) != null && possibleCoordsByCol.get(i).get(col) != null) {
+				possibleCoordsByCol.get(i).get(col).remove(row);
+			}
+		}
 		
 		return 0;
 	}
 
 	private int trimPossibleBySubset() {
-		// TODO test
 		int modified = 0;
 		
 		if (trimPossibleBySubsetNaked() != 0) modified = 1;
@@ -450,9 +474,6 @@ public class Board {
 	private int trimPossibleBySubsetNakedWithinRowCol() {
 		int modified = 0;
 		
-		List<Integer> rowPairs = new ArrayList<Integer>();
-		List<Integer> colPairs = new ArrayList<Integer>();
-		
 		// the somewhat tricky thing is: squares with subsets of the subset count too
 		// i.e. three squares with [5, 7], [5, 7, 8], [5, 8] as options count as a triple
 		// and the options 5, 7, and 8 should be removed from other squares
@@ -464,73 +485,6 @@ public class Board {
 			for (int j = 0; j < 9; j++) {
 				if (trimPossibleBySubsetNakedWithinRowCol(i, j, true) != 0) modified = 1;
 				if (trimPossibleBySubsetNakedWithinRowCol(j, i, false) != 0) modified = 2;
-				
-//				rowPairs.clear();
-//				colPairs.clear();
-				
-//				// check a row for pairs, triples, etc.
-//				if (possibleBySquare.get(i, j) != null
-//						&& possibleBySquare.get(i, j).size() != rowOptions.get(i).size()) {
-//					int possibilitiesInSquare = possibleBySquare.get(i, j).size();
-//					int squaresWithSubsetPossibilities = 1;
-//					rowPairs.add(j);
-//					
-//					for (int k = 0; k < 9; k++) {
-//						if (k == j) continue;
-//						if (possibleBySquare.get(i, k) != null && possibleBySquare.get(i, j).containsAll(possibleBySquare.get(i, k))) {
-//							squaresWithSubsetPossibilities++;
-//							rowPairs.add(k);
-//						}
-//						
-//						// a valid pair/triple/etc was found. now remove those options from other squares in the row
-//						if (squaresWithSubsetPossibilities == possibilitiesInSquare) {
-//							// now rowPairs contains the columns in row i which hold the naked pair/triple/etc squares
-//							Set<Integer> subsetToRemove = possibleBySquare.get(i, j);
-//							for (int l = 0; l < 9; l++) {
-//								// a square that was a member of the pair/triple/etc should not be modified
-//								if (rowPairs.contains(l)) continue;
-//								// a square not a member of the pair/triple/etc should no longer have those options
-//								if (possibleBySquare.get(i, l) != null) {
-//									if (trimPossibleNoEntry(i, l, subsetToRemove) != 0) modified = 1;
-//								}
-//							}
-//							
-//							break;
-//						}
-//					}
-//				}
-//				
-//				// same check as above but for cols
-//				if (possibleBySquare.get(j, i) != null
-//						&& possibleBySquare.get(j, i).size() != colOptions.get(i).size()) {
-//					int possibilitiesInSquare = possibleBySquare.get(j, i).size();
-//					int squaresWithSubsetPossibilities = 1;
-//					colPairs.add(j);
-//					
-//					for (int k = 0; k < 9; k++) {
-//						if (k == j) continue;
-//						if (possibleBySquare.get(k, i) != null && possibleBySquare.get(j, i).containsAll(possibleBySquare.get(k, i))) {
-//							squaresWithSubsetPossibilities++;
-//							colPairs.add(k);
-//						}
-//
-//						// a valid pair/triple/etc was found. now remove those options from other squares in the col
-//						if (squaresWithSubsetPossibilities == possibilitiesInSquare) {
-//							// now colPairs contains the rows in col i which hold the naked pair/triple/etc squares
-//							Set<Integer> subsetToRemove = possibleBySquare.get(j, i);
-//							for (int l = 0; l < 9; l++) {
-//								// a square that was a member of the pair/triple/etc should not be modified
-//								if (colPairs.contains(l)) continue;
-//								// a square not a member of the pair/triple/etc should no longer have those options
-//								if (possibleBySquare.get(l, i) != null) {
-//									if (trimPossibleNoEntry(l, i, subsetToRemove) != 0) modified = 1;
-//								}
-//							}
-//							
-//							break;
-//						}
-//					}
-//				}
 			}
 		}
 		
@@ -590,6 +544,8 @@ public class Board {
 		return modified;
 	}
 	
+	// if there are N options within a row/col/box that all must fall into the same N cells, then no other options
+	// are valid in those cells, since those N options will fill those N cells entirely. remove extra options
 	private int trimPossibleBySubsetHidden() {
 		int modified = 0;
 		
@@ -599,12 +555,14 @@ public class Board {
 		return modified;
 	}
 	
+	// implementation of trimPossibleBySubsetHidden() concerning boxes
 	private int trimPossibleBySubsetHiddenWithinBox() {
 		int modified = 0;
 		
 		return modified;
 	}
 	
+	// implementation of trimPossibleBySubsetHidden() concerning rows/cols
 	private int trimPossibleBySubsetHiddenWithinRowCol() {
 		int modified = 0;
 		
@@ -646,7 +604,7 @@ public class Board {
 			for (Integer startOption : rowOptions.get(i)) {
 				rowMatches.clear();
 				
-				// get the possible locations of the element we're trying to find location matches for
+				// get the possible locations of the element we're trying to find location matches for TODO is possibleCoords correct? 
 				locations = possibleCoordsByRow.get(startOption).get(i);
 				rowMatches.add(startOption);
 				
@@ -661,7 +619,8 @@ public class Board {
 					// we've found a pair/triplet/etc
 					for (Integer location : locations) {
 //						possibleBySquare.get(i, location).removeIf(n -> !rowMatches.contains(n));
-						for (Integer toCheckForRemoval : possibleBySquare.get(i, location)) {
+						Set<Integer> setToCheckForRemoval = possibleBySquare.get(i, location);
+						for (Integer toCheckForRemoval : setToCheckForRemoval) {
 							if (!rowMatches.contains(toCheckForRemoval)) {
 								modified = 1;
 								trimPossibleNoEntry(i, location, toCheckForRemoval);
@@ -691,7 +650,8 @@ public class Board {
 					// we've found a pair/triplet/etc
 					for (Integer location : locations) {
 //									possibleBySquare.get(i, location).removeIf(n -> !rowMatches.contains(n));
-						for (Integer toCheckForRemoval : possibleBySquare.get(location, i)) {
+						Set<Integer> setToCheckForRemoval = possibleBySquare.get(location, i);
+						for (Integer toCheckForRemoval : setToCheckForRemoval) {
 							if (!colMatches.contains(toCheckForRemoval)) {
 								modified = 1;
 								trimPossibleNoEntry(location, i, toCheckForRemoval);
