@@ -132,6 +132,8 @@ public class Board {
 		Board b4 = new Board(s4);
 		
 		
+		String testEasyString = "./boards/board-easy-2.txt";
+		Board testEasy = new Board(testEasyString);
 		
 		String testEvilString = "./boards/board-evil-2.txt";
 		Board testEvil = new Board(testEvilString);
@@ -143,7 +145,7 @@ public class Board {
 		
 		
 		// ***** simplify testing new boards *****
-		Board current = bHardest;
+		Board current = testEasy;
 //		Board current = new Board(s);
 		
 		// level of output, 0-9 inclusive. 0 : no output. 9 : every message implemented
