@@ -8,6 +8,7 @@ import java.io.*;
 
 // make this work for nxn sudoku puzzles (n must be a square)
 // to understand the moves, visit https://www.kristanix.com/sudokuepic/sudoku-solving-techniques.php
+// for more info than you ever wanted, visit http://www.sadmansoftware.com/sudoku/solvingtechniques.php
 @SuppressWarnings("unused")
 public class Board {
 	
@@ -127,84 +128,40 @@ public class Board {
 		// we get a hidden pair of 6/7 in row 3 cols 7 & 8. investigate, use for testing
 		String s4 = "./boards/board-evil-1.txt";
 		Board b4 = new Board(s4);
+		
+		
+		
+		String testEvilString = "./boards/board-evil-2.txt";
+		Board testEvil = new Board(testEvilString);
 
 		
 		
-		
 		// ***** simplify testing new boards *****
-		Board current = b4;
+		Board current = testEvil;
 //		Board current = new Board(s);
 		
 		
 		
 		
 		// print out the starting board
-		current.printBoard();
-		
-//		current.printCellPoss(0, 0);
-//		current.printCellPoss(0, 4);
-//		current.printCellPoss(0, 7);
-//		current.printCellPoss(4, 8);
-//		System.out.println();
-		
-		// CHECKs INIT -- GOOD
 //		current.printBoard();
-//		current.printSol();
-		///////////////
-				
-		// try to categorize logic by difficulty?
-		// fill easy squares first, when possible
-		// start with checkForSoleCandidate()
-		// then maybe checkForUniqueCandidate()
-		// move up to checking if a certain number in some box is only possible in a certain row or col
-		// check for naked/hidden subsets
-		// finally implement x-wing
-		// if one becomes enlightened, one might try "forcing chain" -- see if, for a cell with only two possibilities,
-		// each possibility must lead to a specific result for some other cell, or one choice leads to a contradiction
-		
-//		current.printBoard();
-		
-		// board b can be fully solved by either sole candidate or unique candidate alone
 
-		int[] loop = new int[4];
+		// level of output, 0-9 inclusive. 0 : no output. 9 : every message implemented
+		int verboseLevel = 2;
+		current.solveBoard(verboseLevel);
 		
-		loop[3] = 1;
-		outer:
-		while (loop[3] != 0) {
-			loop[2] = 1;
-			while (loop[2] != 0) {
-				loop[1] = 1;
-				while (loop[1] != 0) {
-					loop[0] = 1;
-					while (loop[0] != 0) {
-						current.printSol();
-						loop[0] = current.checkForSoleCandidate();
-						if (loop[0] != 0) System.out.println("Added some sole candidates");
-						if (current.checkSol() == 0) break outer;
-					}
-					current.printSol();
-					loop[1] = current.checkForUniqueCandidate();
-					if (loop[1] != 0) System.out.println("Added some unique candidates");
-					if (current.checkSol() == 0) break outer;
-				}
-				current.printSol();
-				loop[2] = current.trimPossibleByBlock();
-				if (loop[2] != 0) System.out.println("Did some trimming (block)");
-				if (current.checkSol() == 0) break outer;
-			}
-			current.printSol();
-			loop[3] = current.trimPossibleBySubset();
-			if (loop[3] != 0) System.out.println("Did some trimming (subset)");
-//			if (current.checkSol() == 0) break outer;
-		}
 				
 		// CHECK SOLUTIONS
-//		current.printSol();
-		System.out.println();
-		System.out.println("Solution is " + (current.checkSol() == 0 ? "correct." : "incorrect or incomplete."));
+		if (verboseLevel > 1) {
+			System.out.print("\n\n");
+	//		current.printSol();
+			current.printInitandSol();
+		}
 		
-//		current.printInitandSol();
-		
+		if (verboseLevel > 0) {
+			System.out.println();
+			System.out.println("Solution is " + (current.checkSol(verboseLevel > 2) == 0 ? "correct." : "incorrect or incomplete."));		
+		}
 	}
 		
 	// set up the board initially
@@ -240,6 +197,51 @@ public class Board {
 		}
 		
 		scanner.close();
+	}
+	
+	private void solveBoard(int verboseLevel) {
+		
+		// try to categorize logic by difficulty?
+		// fill easy squares first, when possible
+		// start with checkForSoleCandidate()
+		// then maybe checkForUniqueCandidate()
+		// move up to checking if a certain number in some box is only possible in a certain row or col
+		// check for naked/hidden subsets
+		// finally implement x-wing
+		// if one becomes enlightened, one might try "forcing chain" -- see if, for a cell with only two possibilities,
+		// each possibility must lead to a specific result for some other cell, or one choice leads to a contradiction
+						
+		int[] loop = new int[4];
+		
+		loop[3] = 1;
+		outer:
+		while (loop[3] != 0) {
+			loop[2] = 1;
+			while (loop[2] != 0) {
+				loop[1] = 1;
+				while (loop[1] != 0) {
+					loop[0] = 1;
+					while (loop[0] != 0) {
+//						current.printSol();
+						loop[0] = this.checkForSoleCandidate();
+						if (loop[0] != 0 && verboseLevel > 3) System.out.println("Added some sole candidates");
+						if (this.checkSol(verboseLevel > 8) == 0) break outer;
+					}
+//					current.printSol();
+					loop[1] = this.checkForUniqueCandidate();
+					if (loop[1] != 0 && verboseLevel > 3) System.out.println("Added some unique candidates");
+					if (this.checkSol(verboseLevel > 8) == 0) break outer;
+				}
+//				current.printSol();
+				loop[2] = this.trimPossibleByBlock();
+				if (loop[2] != 0 && verboseLevel > 3) System.out.println("Did some trimming (block)");
+				if (this.checkSol(verboseLevel > 8) == 0) break outer;
+			}
+//			current.printSol();
+			loop[3] = this.trimPossibleBySubset();
+			if (loop[3] != 0 && verboseLevel > 3) System.out.println("Did some trimming (subset)");
+//			if (current.checkSol(false) == 0) break outer;
+		}
 	}
 	
 	// set the working solution, maintain whatever other lists we're working with
@@ -603,6 +605,10 @@ public class Board {
 		// making up the pair/triple/etc. i.e. if there are 3 options that must go in 3 squares, then they must be
 		// values for those squares and any other options can be removed. regardless of if the options are like
 		// [1, 2], [2, 5], [1, 5] or if they're like [1, 2, 5], [1, 2, 5], [1, 2, 5] or something else
+		
+		// NOTE: naked and hidden subsets are two sides of the same coin --
+		// number of digits in naked subset + number of digits in hidden subset = number of open cells in row/col/box
+		// this is why it's harder to find hidden subsets?
 		
 		for (int i = 0; i < 9; i++) {
 			// don't focus on subsets yet, just perfect matches
@@ -997,12 +1003,14 @@ public class Board {
 	}
 	
 	// check each value to make sure the solution is correct
-	private int checkSol() {
+	private int checkSol(boolean verbose) {
 		for (int i = 0; i < 9; i++) {
 			for (int j = 0; j < 9; j++) {
 				if (checkVal(i, j, sol[i][j]) != 0) {
-					System.out.println("i: " + i + ", j: " + j + ", val: " + sol[i][j]);
-					printSol();
+					if (verbose) {
+						System.out.println("i: " + i + ", j: " + j + ", val: " + sol[i][j]);
+						printSol();
+					}
 					return 1;
 				}
 			}
