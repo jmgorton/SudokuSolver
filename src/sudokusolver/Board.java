@@ -21,6 +21,8 @@ public class Board {
 	int[][] boardStart = new int[9][9];
 	// file that will contain the starting board
 	String boardFile;
+	// level of output, 0-9 inclusive. 0 : no output. 9 : every message implemented will be displayed
+	int verbosity;
 	
 	// initial board, not to be modified
 //	public static int[][] boardStart =		// can not make the contents of an array immutable
@@ -135,10 +137,17 @@ public class Board {
 		Board testEvil = new Board(testEvilString);
 
 		
+		String hardest = "./boards/board-hardestever.txt";
+		Board bHardest = new Board(hardest);
+
+		
 		
 		// ***** simplify testing new boards *****
-		Board current = testEvil;
+		Board current = bHardest;
 //		Board current = new Board(s);
+		
+		// level of output, 0-9 inclusive. 0 : no output. 9 : every message implemented
+		current.verbosity = 2;
 		
 		
 		
@@ -146,21 +155,20 @@ public class Board {
 		// print out the starting board
 //		current.printBoard();
 
-		// level of output, 0-9 inclusive. 0 : no output. 9 : every message implemented
-		int verboseLevel = 2;
-		current.solveBoard(verboseLevel);
+		current.solveBoardWithLogic();
+//		if (current.checkSol(current.verbosity > 3) != 0) current.finishThePuzzle();
 		
 				
 		// CHECK SOLUTIONS
-		if (verboseLevel > 1) {
+		if (current.verbosity > 1) {
 			System.out.print("\n\n");
 	//		current.printSol();
 			current.printInitandSol();
 		}
 		
-		if (verboseLevel > 0) {
+		if (current.verbosity > 0) {
 			System.out.println();
-			System.out.println("Solution is " + (current.checkSol(verboseLevel > 2) == 0 ? "correct." : "incorrect or incomplete."));		
+			System.out.println("Solution is " + (current.checkSol(current.verbosity > 2) == 0 ? "correct." : "incorrect or incomplete."));		
 		}
 	}
 		
@@ -199,7 +207,21 @@ public class Board {
 		scanner.close();
 	}
 	
-	private void solveBoard(int verboseLevel) {
+	private void boardCopy(Board toCopy) {
+		this.boardStart = toCopy.boardStart;
+		this.boardFile = toCopy.boardFile;
+		this.verbosity = toCopy.verbosity;
+		this.sol = toCopy.sol;
+		this.rowOptions = toCopy.rowOptions;
+		this.colOptions = toCopy.colOptions;
+		this.boxOptions = toCopy.boxOptions;
+		this.possibleBySquare = toCopy.possibleBySquare;
+		this.possibleCoordsByRow = toCopy.possibleCoordsByRow;
+		this.possibleCoordsByCol = toCopy.possibleCoordsByCol;
+		this.possibleCoordsByBox = toCopy.possibleCoordsByBox;
+	}
+	
+	private void solveBoardWithLogic() {
 		
 		// try to categorize logic by difficulty?
 		// fill easy squares first, when possible
@@ -224,24 +246,26 @@ public class Board {
 					while (loop[0] != 0) {
 //						current.printSol();
 						loop[0] = this.checkForSoleCandidate();
-						if (loop[0] != 0 && verboseLevel > 3) System.out.println("Added some sole candidates");
-						if (this.checkSol(verboseLevel > 8) == 0) break outer;
+						if (loop[0] != 0 && this.verbosity > 3) System.out.println("Added some sole candidates");
+						if (this.checkSol(this.verbosity > 8) == 0) break outer;
 					}
 //					current.printSol();
 					loop[1] = this.checkForUniqueCandidate();
-					if (loop[1] != 0 && verboseLevel > 3) System.out.println("Added some unique candidates");
-					if (this.checkSol(verboseLevel > 8) == 0) break outer;
+					if (loop[1] != 0 && this.verbosity > 3) System.out.println("Added some unique candidates");
+					if (this.checkSol(this.verbosity > 8) == 0) break outer;
 				}
 //				current.printSol();
 				loop[2] = this.trimPossibleByBlock();
-				if (loop[2] != 0 && verboseLevel > 3) System.out.println("Did some trimming (block)");
-				if (this.checkSol(verboseLevel > 8) == 0) break outer;
+				if (loop[2] != 0 && this.verbosity > 3) System.out.println("Did some trimming (block)");
+				if (this.checkSol(this.verbosity > 8) == 0) break outer;
 			}
 //			current.printSol();
 			loop[3] = this.trimPossibleBySubset();
-			if (loop[3] != 0 && verboseLevel > 3) System.out.println("Did some trimming (subset)");
+			if (loop[3] != 0 && this.verbosity > 3) System.out.println("Did some trimming (subset)");
 //			if (current.checkSol(false) == 0) break outer;
 		}
+		
+//		if (this.checkSol(this.verbosity > 4) != 0) this.finishThePuzzle();
 	}
 	
 	// set the working solution, maintain whatever other lists we're working with
@@ -374,6 +398,38 @@ public class Board {
 			}
 			if (possibleCoordsByBox.get(i) != null && possibleCoordsByBox.get(i).get(box) != null) {
 				possibleCoordsByBox.get(i).get(box).remove(boxCell);
+			}
+		}
+		
+		return 0;
+	}
+	
+	// this is less "forcing chain" and more "guessing and seeing if we were right"
+	// this is also crazy inefficient, but hopefully at least always gives us something to fall back on.
+	// should rarely need it, and as we add more solving methods we will need it less and less, if ever
+	private int finishThePuzzle() {
+		// this assumes that the puzzle could be finished with a single guess and check, followed by more logic
+		// if two or more guesses are needed, this would fail
+		// NOTE: not necessarily the first guess and check, but at least one guess exists on the board that would
+		// allow the puzzle to be then solved with logic
+		Board thisCopy = this;
+		
+		for (int i = 0; i < 9; i++) {
+			for (int j = 0; j < 9; j++) {
+				if (thisCopy.possibleBySquare.get(i, j) != null) {
+					Set<Integer> toCheck = new HashSet<Integer>();
+					toCheck.addAll(possibleBySquare.get(i, j));
+					Iterator<Integer> it = toCheck.iterator();
+					while (it.hasNext()) {
+						int next = it.next();
+						thisCopy.setSolCell(i, j, next);
+						thisCopy.solveBoardWithLogic();
+						if (thisCopy.checkSol(false) == 0) {
+							this.boardCopy(thisCopy);
+							return 1;
+						} else thisCopy = this;
+					}
+				}
 			}
 		}
 		
